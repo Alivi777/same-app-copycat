@@ -14,6 +14,7 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
 
   useEffect(() => {
     // Check if user is already logged in
@@ -61,6 +62,48 @@ export default function Login() {
     }
   };
 
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/admin`,
+        },
+      });
+
+      if (error) {
+        toast({
+          title: "Erro ao criar conta",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (data.user) {
+        toast({
+          title: "Conta criada com sucesso!",
+          description: "Sua conta foi criada. Para ter acesso ao painel admin, entre em contato com o administrador.",
+        });
+        setIsSignUp(false);
+        setEmail("");
+        setPassword("");
+      }
+    } catch (error) {
+      toast({
+        title: "Erro ao criar conta",
+        description: "Ocorreu um erro inesperado. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
       <div className="w-full max-w-md">
@@ -78,11 +121,11 @@ export default function Login() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Lock className="text-burgundy-500" size={20} />
-              Login
+              {isSignUp ? "Criar Conta" : "Login"}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleLogin} className="space-y-4">
+            <form onSubmit={isSignUp ? handleSignUp : handleLogin} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <div className="relative">
@@ -120,15 +163,29 @@ export default function Login() {
                 className="w-full bg-burgundy-500 hover:bg-burgundy-600"
                 disabled={isLoading}
               >
-                {isLoading ? "Entrando..." : "Entrar"}
+                {isLoading ? (isSignUp ? "Criando conta..." : "Entrando...") : (isSignUp ? "Criar Conta" : "Entrar")}
               </Button>
             </form>
+
+            <div className="mt-4 text-center">
+              <button
+                type="button"
+                onClick={() => setIsSignUp(!isSignUp)}
+                className="text-sm text-burgundy-600 hover:text-burgundy-700 underline"
+              >
+                {isSignUp ? "Já tem uma conta? Faça login" : "Não tem uma conta? Cadastre-se"}
+              </button>
+            </div>
           </CardContent>
         </Card>
 
-        <p className="text-center text-sm text-gray-600 mt-4">
-          Para criar uma conta de administrador, entre em contato com o suporte.
-        </p>
+        {isSignUp && (
+          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-800">
+              <strong>Atenção:</strong> Após criar sua conta, você precisará de permissões de administrador para acessar o painel. Copie o ID do seu usuário e execute o SQL fornecido nas instruções.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
