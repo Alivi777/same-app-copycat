@@ -75,7 +75,7 @@ export default function Index() {
           phone: data.phone,
           email: data.email,
           address: data.address,
-          date: data.date,
+          date: data.date || null,
           selected_teeth: selectedTeeth,
           smile_photo_url: smilePhotoUrl,
           scan_file_url: scanFileUrl,
@@ -160,7 +160,7 @@ export default function Index() {
                       <FormItem>
                         <FormLabel>Nome do Paciente</FormLabel>
                         <FormControl>
-                          <Input placeholder="Nome completo do paciente" {...field} />
+                          <Input placeholder="Nome completo do paciente" {...field} required />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -177,7 +177,7 @@ export default function Index() {
                           Data da Solicitação
                         </FormLabel>
                         <FormControl>
-                          <Input type="date" {...field} />
+                          <Input type="date" {...field} required />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
