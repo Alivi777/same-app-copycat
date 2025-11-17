@@ -259,6 +259,14 @@ export default function Admin() {
                                     <FileLink filePath={order.scan_file_url} />
                                   </div>
                                 )}
+                                {order.additional_notes && (
+                                  <div>
+                                    <h3 className="font-semibold mb-2">Observações da Clínica</h3>
+                                    <div className="bg-muted p-4 rounded-lg">
+                                      <p className="text-sm whitespace-pre-wrap">{order.additional_notes}</p>
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             </DialogContent>
                           </Dialog>
