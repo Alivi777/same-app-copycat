@@ -1,38 +1,55 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { FileText, LogOut, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Admin() {
-  const [orders] = useState([
-    {
-      id: "OS-001",
-      patientName: "João Silva",
-      dentistName: "Dr. Maria Santos",
-      date: "2024-01-15",
-      status: "pending",
-      teeth: "11, 12, 21, 22",
-    },
-    {
-      id: "OS-002",
-      patientName: "Ana Costa",
-      dentistName: "Dr. Pedro Lima",
-      date: "2024-01-14",
-      status: "in-progress",
-      teeth: "36, 37",
-    },
-    {
-      id: "OS-003",
-      patientName: "Carlos Souza",
-      dentistName: "Dr. Maria Santos",
-      date: "2024-01-13",
-      status: "completed",
-      teeth: "16, 17, 18",
-    },
-  ]);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchOrders();
+
+    // Subscribe to real-time updates
+    const channel = supabase
+      .channel('orders-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'orders'
+        },
+        () => {
+          fetchOrders();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const fetchOrders = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setOrders(data || []);
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
@@ -93,21 +110,35 @@ export default function Admin() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {orders.map((order) => (
-                  <TableRow key={order.id}>
-                    <TableCell className="font-medium">{order.id}</TableCell>
-                    <TableCell>{order.patientName}</TableCell>
-                    <TableCell>{order.dentistName}</TableCell>
-                    <TableCell>{new Date(order.date).toLocaleDateString("pt-BR")}</TableCell>
-                    <TableCell>{order.teeth}</TableCell>
-                    <TableCell>{getStatusBadge(order.status)}</TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="sm">
-                        Ver Detalhes
-                      </Button>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8">
+                      Carregando pedidos...
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : orders.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8">
+                      Nenhum pedido encontrado
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  orders.map((order) => (
+                    <TableRow key={order.id}>
+                      <TableCell className="font-medium">{order.order_number}</TableCell>
+                      <TableCell>{order.patient_name}</TableCell>
+                      <TableCell>{order.dentist_name}</TableCell>
+                      <TableCell>{new Date(order.date).toLocaleDateString("pt-BR")}</TableCell>
+                      <TableCell>{order.selected_teeth?.join(', ') || '-'}</TableCell>
+                      <TableCell>{getStatusBadge(order.status)}</TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="sm">
+                          Ver Detalhes
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </CardContent>
