@@ -4,11 +4,56 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { FileText, LogOut, Search } from "lucide-react";
+import { FileText, LogOut, Search, Eye } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { Session } from "@supabase/supabase-js";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+
+const ImageWithSignedUrl = ({ filePath }: { filePath: string }) => {
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadImage = async () => {
+      const { data } = await supabase.storage
+        .from('order-files')
+        .createSignedUrl(filePath, 3600);
+      if (data) setImageUrl(data.signedUrl);
+    };
+    loadImage();
+  }, [filePath]);
+
+  return imageUrl ? (
+    <img src={imageUrl} alt="Arquivo" className="max-w-full h-auto rounded-lg" />
+  ) : (
+    <div className="text-muted-foreground">Carregando...</div>
+  );
+};
+
+const FileLink = ({ filePath }: { filePath: string }) => {
+  const [fileUrl, setFileUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadUrl = async () => {
+      const { data } = await supabase.storage
+        .from('order-files')
+        .createSignedUrl(filePath, 3600);
+      if (data) setFileUrl(data.signedUrl);
+    };
+    loadUrl();
+  }, [filePath]);
+
+  return fileUrl ? (
+    <Button asChild variant="outline">
+      <a href={fileUrl} target="_blank" rel="noopener noreferrer">
+        Abrir Arquivo
+      </a>
+    </Button>
+  ) : (
+    <div className="text-muted-foreground">Carregando...</div>
+  );
+};
 
 export default function Admin() {
   const navigate = useNavigate();
@@ -163,7 +208,7 @@ export default function Admin() {
                   <TableHead>Data</TableHead>
                   <TableHead>Dentes</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
+                  <TableHead className="text-right">Arquivos</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -189,9 +234,37 @@ export default function Admin() {
                       <TableCell>{order.selected_teeth?.join(', ') || '-'}</TableCell>
                       <TableCell>{getStatusBadge(order.status)}</TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="sm">
-                          Ver Detalhes
-                        </Button>
+                        {(order.smile_photo_url || order.scan_file_url) ? (
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button variant="outline" size="sm">
+                                <Eye className="mr-1 h-4 w-4" />
+                                Ver Arquivos
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-3xl">
+                              <DialogHeader>
+                                <DialogTitle>Arquivos - OS {order.order_number}</DialogTitle>
+                              </DialogHeader>
+                              <div className="space-y-4">
+                                {order.smile_photo_url && (
+                                  <div>
+                                    <h3 className="font-semibold mb-2">Foto do Sorriso</h3>
+                                    <ImageWithSignedUrl filePath={order.smile_photo_url} />
+                                  </div>
+                                )}
+                                {order.scan_file_url && (
+                                  <div>
+                                    <h3 className="font-semibold mb-2">Arquivo de Scan</h3>
+                                    <FileLink filePath={order.scan_file_url} />
+                                  </div>
+                                )}
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">Sem arquivos</span>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))

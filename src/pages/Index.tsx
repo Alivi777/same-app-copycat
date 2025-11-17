@@ -47,10 +47,7 @@ export default function Index() {
           .upload(filePath, smilePhoto);
         
         if (!uploadError) {
-          const { data: urlData } = supabase.storage
-            .from('order-files')
-            .getPublicUrl(filePath);
-          smilePhotoUrl = urlData.publicUrl;
+          smilePhotoUrl = filePath;
         }
       }
 
@@ -63,10 +60,7 @@ export default function Index() {
           .upload(filePath, scanFile);
         
         if (!uploadError) {
-          const { data: urlData } = supabase.storage
-            .from('order-files')
-            .getPublicUrl(filePath);
-          scanFileUrl = urlData.publicUrl;
+          scanFileUrl = filePath;
         }
       }
 
