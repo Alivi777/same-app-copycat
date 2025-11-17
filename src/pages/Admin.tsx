@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -6,13 +7,59 @@ import { Badge } from "@/components/ui/badge";
 import { FileText, LogOut, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import type { Session } from "@supabase/supabase-js";
 
 export default function Admin() {
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [session, setSession] = useState<Session | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    fetchOrders();
+    // Check authentication and admin role
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        navigate("/login");
+        return;
+      }
+
+      setSession(session);
+
+      // Check if user has admin role
+      const { data: roles } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', session.user.id)
+        .eq('role', 'admin')
+        .single();
+
+      if (!roles) {
+        toast({
+          title: "Acesso negado",
+          description: "Você não tem permissão para acessar esta página.",
+          variant: "destructive",
+        });
+        navigate("/");
+        return;
+      }
+
+      setIsAdmin(true);
+      fetchOrders();
+    };
+
+    checkAuth();
+
+    // Subscribe to auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) {
+        navigate("/login");
+      }
+    });
 
     // Subscribe to real-time updates
     const channel = supabase
@@ -31,9 +78,10 @@ export default function Admin() {
       .subscribe();
 
     return () => {
+      subscription.unsubscribe();
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [navigate, toast]);
 
   const fetchOrders = async () => {
     try {
@@ -62,6 +110,15 @@ export default function Admin() {
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/login");
+  };
+
+  if (!isAdmin) {
+    return null; // Show nothing while checking auth
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -72,7 +129,7 @@ export default function Admin() {
               <img src="/tooth-selection-icon.png" alt="Logo" className="w-8 h-8" />
               <h1 className="text-2xl font-bold text-gray-900">Painel Administrativo</h1>
             </div>
-            <Button variant="outline" onClick={() => (window.location.href = "/")}>
+            <Button variant="outline" onClick={handleLogout}>
               <LogOut className="mr-2 w-4 h-4" />
               Sair
             </Button>

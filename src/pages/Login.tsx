@@ -1,44 +1,59 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Lock, User } from "lucide-react";
+import { Lock, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Login() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    // Check if user is already logged in
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        navigate("/admin");
+      }
+    });
+  }, [navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      // Simulate authentication - in production this would call an API
-      if (username === "admin" && password === "admin") {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        toast({
+          title: "Erro ao fazer login",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (data.session) {
         toast({
           title: "Login realizado com sucesso",
           description: "Bem-vindo ao sistema!",
         });
-        setTimeout(() => {
-          navigate("/admin");
-        }, 500);
-      } else {
-        toast({
-          title: "Erro ao fazer login",
-          description: "Usuário ou senha incorretos.",
-          variant: "destructive",
-        });
+        navigate("/admin");
       }
     } catch (error) {
       toast({
         title: "Erro ao fazer login",
-        description: "Ocorreu um erro. Tente novamente.",
+        description: "Ocorreu um erro inesperado. Tente novamente.",
         variant: "destructive",
       });
     } finally {
@@ -69,16 +84,16 @@ export default function Login() {
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="username">Usuário</Label>
+                <Label htmlFor="email">Email</Label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
                   <Input
-                    id="username"
-                    type="text"
-                    placeholder="Digite seu usuário"
+                    id="email"
+                    type="email"
+                    placeholder="Digite seu email"
                     className="pl-10"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     required
                   />
                 </div>
@@ -112,7 +127,7 @@ export default function Login() {
         </Card>
 
         <p className="text-center text-sm text-gray-600 mt-4">
-          Usuário demo: <span className="font-semibold">admin</span> / Senha: <span className="font-semibold">admin</span>
+          Para criar uma conta de administrador, entre em contato com o suporte.
         </p>
       </div>
     </div>
