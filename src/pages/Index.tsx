@@ -9,6 +9,7 @@ import { ToothConfiguration } from "@/components/tooth-configuration";
 import { User, FileText, Upload, Phone, Mail, MapPin, Calendar } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Index() {
   const { toast } = useToast();
@@ -29,22 +30,85 @@ export default function Index() {
     },
   });
 
-  const onSubmit = (data: any) => {
-    console.log("Form data:", data);
-    console.log("Selected teeth:", selectedTeeth);
-    console.log("Smile photo:", smilePhoto);
-    console.log("Scan file:", scanFile);
+  const onSubmit = async (data: any) => {
+    try {
+      // Generate order number
+      const orderNumber = `OS-${Date.now()}`;
+      
+      let smilePhotoUrl = null;
+      let scanFileUrl = null;
 
-    toast({
-      title: "Ordem de Serviço Enviada",
-      description: "A ordem de serviço foi registrada com sucesso!",
-    });
+      // Upload smile photo if exists
+      if (smilePhoto) {
+        const fileExt = smilePhoto.name.split('.').pop();
+        const filePath = `${orderNumber}/smile.${fileExt}`;
+        const { error: uploadError } = await supabase.storage
+          .from('order-files')
+          .upload(filePath, smilePhoto);
+        
+        if (!uploadError) {
+          const { data: urlData } = supabase.storage
+            .from('order-files')
+            .getPublicUrl(filePath);
+          smilePhotoUrl = urlData.publicUrl;
+        }
+      }
 
-    // Reset form
-    form.reset();
-    setSelectedTeeth([]);
-    setSmilePhoto(null);
-    setScanFile(null);
+      // Upload scan file if exists
+      if (scanFile) {
+        const fileExt = scanFile.name.split('.').pop();
+        const filePath = `${orderNumber}/scan.${fileExt}`;
+        const { error: uploadError } = await supabase.storage
+          .from('order-files')
+          .upload(filePath, scanFile);
+        
+        if (!uploadError) {
+          const { data: urlData } = supabase.storage
+            .from('order-files')
+            .getPublicUrl(filePath);
+          scanFileUrl = urlData.publicUrl;
+        }
+      }
+
+      // Save order to database
+      const { error: insertError } = await supabase
+        .from('orders')
+        .insert({
+          order_number: orderNumber,
+          patient_name: data.patientName,
+          dentist_name: data.dentistName,
+          clinic_name: data.clinicName,
+          phone: data.phone,
+          email: data.email,
+          address: data.address,
+          date: data.date,
+          selected_teeth: selectedTeeth,
+          smile_photo_url: smilePhotoUrl,
+          scan_file_url: scanFileUrl,
+          additional_notes: data.additionalNotes,
+          status: 'pending'
+        });
+
+      if (insertError) throw insertError;
+
+      toast({
+        title: "Ordem de Serviço Enviada",
+        description: "A ordem de serviço foi registrada com sucesso!",
+      });
+
+      // Reset form
+      form.reset();
+      setSelectedTeeth([]);
+      setSmilePhoto(null);
+      setScanFile(null);
+    } catch (error) {
+      console.error('Error submitting order:', error);
+      toast({
+        title: "Erro ao Enviar",
+        description: "Ocorreu um erro ao enviar a ordem de serviço. Tente novamente.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleSmilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {

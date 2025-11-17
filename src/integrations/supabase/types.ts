@@ -14,7 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      orders: {
+        Row: {
+          additional_notes: string | null
+          address: string | null
+          clinic_name: string | null
+          created_at: string
+          date: string
+          dentist_name: string
+          email: string | null
+          id: string
+          order_number: string
+          patient_name: string
+          phone: string | null
+          scan_file_url: string | null
+          selected_teeth: string[]
+          smile_photo_url: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          additional_notes?: string | null
+          address?: string | null
+          clinic_name?: string | null
+          created_at?: string
+          date: string
+          dentist_name: string
+          email?: string | null
+          id?: string
+          order_number: string
+          patient_name: string
+          phone?: string | null
+          scan_file_url?: string | null
+          selected_teeth: string[]
+          smile_photo_url?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          additional_notes?: string | null
+          address?: string | null
+          clinic_name?: string | null
+          created_at?: string
+          date?: string
+          dentist_name?: string
+          email?: string | null
+          id?: string
+          order_number?: string
+          patient_name?: string
+          phone?: string | null
+          scan_file_url?: string | null
+          selected_teeth?: string[]
+          smile_photo_url?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
