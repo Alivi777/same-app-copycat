@@ -268,26 +268,94 @@ export default function Admin() {
                                 Ver Arquivos
                               </Button>
                             </DialogTrigger>
-                            <DialogContent className="max-w-3xl">
+                            <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
                               <DialogHeader>
-                                <DialogTitle>Arquivos - OS {order.order_number}</DialogTitle>
+                                <DialogTitle>Detalhes - OS {order.order_number}</DialogTitle>
                               </DialogHeader>
-                              <div className="space-y-4">
-                                {order.smile_photo_url && (
+                              <div className="space-y-6">
+                                {/* Informações da Clínica */}
+                                <div>
+                                  <h3 className="font-semibold mb-3 text-lg">Informações da Clínica</h3>
+                                  <div className="bg-muted p-4 rounded-lg space-y-2">
+                                    {order.clinic_name && (
+                                      <div className="flex gap-2">
+                                        <span className="font-medium">Clínica:</span>
+                                        <span>{order.clinic_name}</span>
+                                      </div>
+                                    )}
+                                    {order.email && (
+                                      <div className="flex gap-2">
+                                        <span className="font-medium">Email:</span>
+                                        <span>{order.email}</span>
+                                      </div>
+                                    )}
+                                    {order.phone && (
+                                      <div className="flex gap-2">
+                                        <span className="font-medium">Telefone:</span>
+                                        <span>{order.phone}</span>
+                                      </div>
+                                    )}
+                                    {order.address && (
+                                      <div className="flex gap-2">
+                                        <span className="font-medium">Endereço:</span>
+                                        <span>{order.address}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Informações do Pedido */}
+                                <div>
+                                  <h3 className="font-semibold mb-3 text-lg">Informações do Pedido</h3>
+                                  <div className="bg-muted p-4 rounded-lg space-y-2">
+                                    <div className="flex gap-2">
+                                      <span className="font-medium">Paciente:</span>
+                                      <span>{order.patient_name}</span>
+                                    </div>
+                                    <div className="flex gap-2">
+                                      <span className="font-medium">Dentista:</span>
+                                      <span>{order.dentist_name}</span>
+                                    </div>
+                                    <div className="flex gap-2">
+                                      <span className="font-medium">Data:</span>
+                                      <span>{new Date(order.date).toLocaleDateString("pt-BR")}</span>
+                                    </div>
+                                    <div className="flex gap-2">
+                                      <span className="font-medium">Dentes:</span>
+                                      <span>{order.selected_teeth?.join(', ') || '-'}</span>
+                                    </div>
+                                    <div className="flex gap-2">
+                                      <span className="font-medium">Status:</span>
+                                      {getStatusBadge(order.status)}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Arquivos */}
+                                {(order.smile_photo_url || order.scan_file_url) && (
                                   <div>
-                                    <h3 className="font-semibold mb-2">Foto do Sorriso</h3>
-                                    <ImageWithSignedUrl filePath={order.smile_photo_url} />
+                                    <h3 className="font-semibold mb-3 text-lg">Arquivos</h3>
+                                    <div className="space-y-4">
+                                      {order.smile_photo_url && (
+                                        <div>
+                                          <h4 className="font-medium mb-2">Foto do Sorriso</h4>
+                                          <ImageWithSignedUrl filePath={order.smile_photo_url} />
+                                        </div>
+                                      )}
+                                      {order.scan_file_url && (
+                                        <div>
+                                          <h4 className="font-medium mb-2">Arquivo de Scan</h4>
+                                          <FileLink filePath={order.scan_file_url} />
+                                        </div>
+                                      )}
+                                    </div>
                                   </div>
                                 )}
-                                {order.scan_file_url && (
-                                  <div>
-                                    <h3 className="font-semibold mb-2">Arquivo de Scan</h3>
-                                    <FileLink filePath={order.scan_file_url} />
-                                  </div>
-                                )}
+
+                                {/* Observações */}
                                 {order.additional_notes && (
                                   <div>
-                                    <h3 className="font-semibold mb-2">Observações da Clínica</h3>
+                                    <h3 className="font-semibold mb-3 text-lg">Observações da Clínica</h3>
                                     <div className="bg-muted p-4 rounded-lg">
                                       <p className="text-sm whitespace-pre-wrap">{order.additional_notes}</p>
                                     </div>
