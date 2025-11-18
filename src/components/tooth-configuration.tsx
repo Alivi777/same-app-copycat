@@ -4,14 +4,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Settings } from "lucide-react";
-
 interface ToothConfigurationProps {
   onConfigChange?: (config: any) => void;
 }
-
-export function ToothConfiguration({ onConfigChange }: ToothConfigurationProps) {
-  return (
-    <Card>
+export function ToothConfiguration({
+  onConfigChange
+}: ToothConfigurationProps) {
+  return <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-3">
           <Settings className="text-burgundy-500" size={20} />
@@ -63,15 +62,7 @@ export function ToothConfiguration({ onConfigChange }: ToothConfigurationProps) 
           </div>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="observacoes">Observações Técnicas</Label>
-          <Textarea
-            id="observacoes"
-            placeholder="Descreva detalhes específicos, características especiais, etc."
-            rows={4}
-          />
-        </div>
+        
       </CardContent>
-    </Card>
-  );
+    </Card>;
 }
