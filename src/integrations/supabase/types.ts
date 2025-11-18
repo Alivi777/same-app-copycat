@@ -19,14 +19,18 @@ export type Database = {
           additional_notes: string | null
           address: string | null
           clinic_name: string | null
+          color: string | null
           created_at: string
           date: string
+          delivery_deadline: string | null
           dentist_name: string
           email: string | null
           id: string
+          material: string | null
           order_number: string
           patient_name: string
           phone: string | null
+          prosthesis_type: string | null
           scan_file_url: string | null
           selected_teeth: string[]
           smile_photo_url: string | null
@@ -37,14 +41,18 @@ export type Database = {
           additional_notes?: string | null
           address?: string | null
           clinic_name?: string | null
+          color?: string | null
           created_at?: string
           date: string
+          delivery_deadline?: string | null
           dentist_name: string
           email?: string | null
           id?: string
+          material?: string | null
           order_number: string
           patient_name: string
           phone?: string | null
+          prosthesis_type?: string | null
           scan_file_url?: string | null
           selected_teeth: string[]
           smile_photo_url?: string | null
@@ -55,14 +63,18 @@ export type Database = {
           additional_notes?: string | null
           address?: string | null
           clinic_name?: string | null
+          color?: string | null
           created_at?: string
           date?: string
+          delivery_deadline?: string | null
           dentist_name?: string
           email?: string | null
           id?: string
+          material?: string | null
           order_number?: string
           patient_name?: string
           phone?: string | null
+          prosthesis_type?: string | null
           scan_file_url?: string | null
           selected_teeth?: string[]
           smile_photo_url?: string | null
