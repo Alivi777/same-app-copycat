@@ -470,37 +470,27 @@ export default function Admin() {
                                 </div>
 
                                 {/* Configurações Técnicas */}
-                                {(order.material || order.prosthesis_type || order.color || order.delivery_deadline) && (
-                                  <div>
-                                    <h3 className="font-semibold mb-3 text-lg">Configurações Técnicas</h3>
-                                    <div className="bg-muted p-4 rounded-lg space-y-2">
-                                      {order.material && (
-                                        <div className="flex gap-2">
-                                          <span className="font-medium">Material:</span>
-                                          <span>{order.material}</span>
-                                        </div>
-                                      )}
-                                      {order.prosthesis_type && (
-                                        <div className="flex gap-2">
-                                          <span className="font-medium">Tipo de Prótese:</span>
-                                          <span>{order.prosthesis_type}</span>
-                                        </div>
-                                      )}
-                                      {order.color && (
-                                        <div className="flex gap-2">
-                                          <span className="font-medium">Cor / Tonalidade:</span>
-                                          <span>{order.color}</span>
-                                        </div>
-                                      )}
-                                      {order.delivery_deadline && (
-                                        <div className="flex gap-2">
-                                          <span className="font-medium">Prazo de Entrega:</span>
-                                          <span>{new Date(order.delivery_deadline).toLocaleDateString("pt-BR")}</span>
-                                        </div>
-                                      )}
+                                <div>
+                                  <h3 className="font-semibold mb-3 text-lg">Configurações Técnicas</h3>
+                                  <div className="bg-muted p-4 rounded-lg space-y-2">
+                                    <div className="flex gap-2">
+                                      <span className="font-medium">Material:</span>
+                                      <span>{order.material || '-'}</span>
+                                    </div>
+                                    <div className="flex gap-2">
+                                      <span className="font-medium">Tipo de Prótese:</span>
+                                      <span>{order.prosthesis_type || '-'}</span>
+                                    </div>
+                                    <div className="flex gap-2">
+                                      <span className="font-medium">Cor / Tonalidade:</span>
+                                      <span>{order.color || '-'}</span>
+                                    </div>
+                                    <div className="flex gap-2">
+                                      <span className="font-medium">Prazo de Entrega:</span>
+                                      <span>{order.delivery_deadline ? new Date(order.delivery_deadline).toLocaleDateString("pt-BR") : '-'}</span>
                                     </div>
                                   </div>
-                                )}
+                                </div>
 
                                 {/* Arquivos */}
                                 {(order.smile_photo_url || order.scan_file_url) && (
