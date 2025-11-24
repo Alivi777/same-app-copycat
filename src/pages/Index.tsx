@@ -19,6 +19,7 @@ export default function Index() {
 
   const form = useForm({
     defaultValues: {
+      patientId: "",
       patientName: "",
       dentistName: "",
       clinicName: "",
@@ -69,6 +70,7 @@ export default function Index() {
         .from('orders')
         .insert({
           order_number: orderNumber,
+          patient_id: data.patientId,
           patient_name: data.patientName,
           dentist_name: data.dentistName,
           clinic_name: data.clinicName,
@@ -153,6 +155,20 @@ export default function Index() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="patientId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Id do Paciente</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Identificação do paciente" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
                   <FormField
                     control={form.control}
                     name="patientName"

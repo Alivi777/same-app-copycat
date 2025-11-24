@@ -28,6 +28,7 @@ export type Database = {
           id: string
           material: string | null
           order_number: string
+          patient_id: string | null
           patient_name: string
           phone: string | null
           prosthesis_type: string | null
@@ -50,6 +51,7 @@ export type Database = {
           id?: string
           material?: string | null
           order_number: string
+          patient_id?: string | null
           patient_name: string
           phone?: string | null
           prosthesis_type?: string | null
@@ -72,6 +74,7 @@ export type Database = {
           id?: string
           material?: string | null
           order_number?: string
+          patient_id?: string | null
           patient_name?: string
           phone?: string | null
           prosthesis_type?: string | null
