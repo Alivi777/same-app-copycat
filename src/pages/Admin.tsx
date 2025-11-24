@@ -265,14 +265,20 @@ export default function Admin() {
     try {
       const { error } = await supabase
         .from('orders')
-        .update({ assigned_to: session.user.id })
+        .update({ 
+          assigned_to: session.user.id,
+          status: 'in-progress'
+        })
         .eq('id', orderId);
 
       if (error) throw error;
 
+      // Recarrega os dados para atualizar a tabela
+      fetchOrders();
+
       toast({
         title: "Ordem aceita!",
-        description: "A ordem foi atribuída a você com sucesso.",
+        description: "A ordem foi atribuída a você e está em andamento.",
       });
     } catch (error) {
       console.error('Error accepting order:', error);
@@ -363,22 +369,9 @@ export default function Admin() {
                   filteredOrders.map((order) => (
                     <TableRow key={order.id}>
                       <TableCell>
-                        <Select 
-                          value={order.assigned_to || "unassigned"} 
-                          onValueChange={(value) => handleAssignUser(order.id, value === "unassigned" ? null : value)}
-                        >
-                          <SelectTrigger className="w-[160px]">
-                            <SelectValue placeholder="Não atribuído" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="unassigned">Não atribuído</SelectItem>
-                            {users.map((user) => (
-                              <SelectItem key={user.user_id} value={user.user_id}>
-                                {user.username}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        {order.assigned_to 
+                          ? users.find(u => u.user_id === order.assigned_to)?.username || 'Usuário'
+                          : '-'}
                       </TableCell>
                       <TableCell>{order.patient_name}</TableCell>
                       <TableCell>{order.dentist_name}</TableCell>
