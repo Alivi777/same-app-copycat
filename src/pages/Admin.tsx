@@ -503,16 +503,24 @@ export default function Admin() {
                 Pendentes ({orderCounts.pending})
               </Button>
               <Button
-                variant={statusFilter === 'in-progress' ? "default" : "outline"}
+                variant="outline"
                 onClick={() => setStatusFilter('in-progress')}
-                className="flex-1 min-w-[150px] max-w-xs"
+                className={`flex-1 min-w-[150px] max-w-xs ${
+                  statusFilter === 'in-progress' 
+                    ? 'bg-info text-info-foreground hover:bg-info/90 border-info' 
+                    : ''
+                }`}
               >
                 Em Andamento ({orderCounts['in-progress']})
               </Button>
               <Button
-                variant={statusFilter === 'completed' ? "default" : "outline"}
+                variant="outline"
                 onClick={() => setStatusFilter('completed')}
-                className="flex-1 min-w-[150px] max-w-xs"
+                className={`flex-1 min-w-[150px] max-w-xs ${
+                  statusFilter === 'completed' 
+                    ? 'bg-success text-success-foreground hover:bg-success/90 border-success' 
+                    : ''
+                }`}
               >
                 Concluídos ({orderCounts.completed})
               </Button>
