@@ -252,6 +252,38 @@ export default function Admin() {
     }
   };
 
+  const handleAcceptOrder = async (orderId: string) => {
+    if (!session?.user?.id) {
+      toast({
+        title: "Erro",
+        description: "Você precisa estar logado para aceitar uma ordem.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ assigned_to: session.user.id })
+        .eq('id', orderId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Ordem aceita!",
+        description: "A ordem foi atribuída a você com sucesso.",
+      });
+    } catch (error) {
+      console.error('Error accepting order:', error);
+      toast({
+        title: "Erro ao aceitar",
+        description: "Não foi possível aceitar a ordem.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const filteredOrders = statusFilter 
     ? orders.filter(order => order.status === statusFilter)
     : orders;
@@ -493,18 +525,34 @@ export default function Admin() {
                                   </div>
                                 )}
 
-                                {/* Observações */}
-                                {order.additional_notes && (
-                                  <div>
-                                    <h3 className="font-semibold mb-3 text-lg">Observações da Clínica</h3>
-                                    <div className="bg-muted p-4 rounded-lg">
-                                      <p className="text-sm whitespace-pre-wrap">{order.additional_notes}</p>
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            </DialogContent>
-                          </Dialog>
+                                 {/* Observações */}
+                                 {order.additional_notes && (
+                                   <div>
+                                     <h3 className="font-semibold mb-3 text-lg">Observações da Clínica</h3>
+                                     <div className="bg-muted p-4 rounded-lg">
+                                       <p className="text-sm whitespace-pre-wrap">{order.additional_notes}</p>
+                                     </div>
+                                   </div>
+                                 )}
+
+                                 {/* Botão Aceitar */}
+                                 <div className="flex justify-end pt-4 border-t">
+                                   {order.assigned_to ? (
+                                     <div className="text-sm text-muted-foreground">
+                                       Atribuído a: <span className="font-medium">{order.assigned_user?.username || 'Usuário'}</span>
+                                     </div>
+                                   ) : (
+                                     <Button 
+                                       onClick={() => handleAcceptOrder(order.id)}
+                                       className="bg-success text-success-foreground hover:bg-success/90"
+                                     >
+                                       Aceitar Ordem
+                                     </Button>
+                                   )}
+                                 </div>
+                               </div>
+                             </DialogContent>
+                           </Dialog>
                         ) : (
                           <span className="text-muted-foreground text-sm">Sem arquivos</span>
                         )}
