@@ -12,6 +12,7 @@ import type { Session } from "@supabase/supabase-js";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Trash2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const ImageWithSignedUrl = ({ filePath }: { filePath: string }) => {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
@@ -64,6 +65,7 @@ export default function Admin() {
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState<Session | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string | null>(null);
 
   useEffect(() => {
     // Check authentication and admin role
@@ -185,6 +187,39 @@ export default function Admin() {
     navigate("/login");
   };
 
+  const handleStatusChange = async (orderId: string, newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ status: newStatus })
+        .eq('id', orderId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Status atualizado",
+        description: "O status da ordem foi alterado com sucesso.",
+      });
+    } catch (error) {
+      console.error('Error updating status:', error);
+      toast({
+        title: "Erro ao atualizar",
+        description: "Não foi possível atualizar o status.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const filteredOrders = statusFilter 
+    ? orders.filter(order => order.status === statusFilter)
+    : orders;
+
+  const orderCounts = {
+    pending: orders.filter(o => o.status === 'pending').length,
+    'in-progress': orders.filter(o => o.status === 'in-progress').length,
+    completed: orders.filter(o => o.status === 'completed').length,
+  };
+
   if (!isAdmin) {
     return null; // Show nothing while checking auth
   }
@@ -244,21 +279,35 @@ export default function Admin() {
                       Carregando pedidos...
                     </TableCell>
                   </TableRow>
-                ) : orders.length === 0 ? (
+                ) : filteredOrders.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={8} className="text-center py-8">
                       Nenhum pedido encontrado
                     </TableCell>
                   </TableRow>
                 ) : (
-                  orders.map((order) => (
+                  filteredOrders.map((order) => (
                     <TableRow key={order.id}>
                       <TableCell className="font-medium">{order.order_number}</TableCell>
                       <TableCell>{order.patient_name}</TableCell>
                       <TableCell>{order.dentist_name}</TableCell>
                       <TableCell>{new Date(order.date).toLocaleDateString("pt-BR")}</TableCell>
                       <TableCell>{order.selected_teeth?.join(', ') || '-'}</TableCell>
-                      <TableCell>{getStatusBadge(order.status)}</TableCell>
+                      <TableCell>
+                        <Select 
+                          value={order.status} 
+                          onValueChange={(value) => handleStatusChange(order.id, value)}
+                        >
+                          <SelectTrigger className="w-[160px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="pending">Pendente</SelectItem>
+                            <SelectItem value="in-progress">Em Andamento</SelectItem>
+                            <SelectItem value="completed">Concluído</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
                       <TableCell className="text-right">
                         {(order.smile_photo_url || order.scan_file_url) ? (
                           <Dialog>
@@ -435,41 +484,41 @@ export default function Admin() {
           </CardContent>
         </Card>
 
-        {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <p className="text-sm text-gray-600">Pendentes</p>
-                <p className="text-3xl font-bold text-burgundy-500 mt-2">
-                  {orders.filter((o) => o.status === "pending").length}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <p className="text-sm text-gray-600">Em Andamento</p>
-                <p className="text-3xl font-bold text-blue-600 mt-2">
-                  {orders.filter((o) => o.status === "in-progress").length}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <p className="text-sm text-gray-600">Concluídos</p>
-                <p className="text-3xl font-bold text-green-600 mt-2">
-                  {orders.filter((o) => o.status === "completed").length}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Status Filters */}
+        <Card className="mt-8">
+          <CardContent className="pt-6">
+            <div className="flex gap-3 justify-center flex-wrap">
+              <Button
+                variant={statusFilter === null ? "default" : "outline"}
+                onClick={() => setStatusFilter(null)}
+                className="flex-1 min-w-[150px] max-w-xs"
+              >
+                Todos ({orders.length})
+              </Button>
+              <Button
+                variant={statusFilter === 'pending' ? "default" : "outline"}
+                onClick={() => setStatusFilter('pending')}
+                className="flex-1 min-w-[150px] max-w-xs"
+              >
+                Pendentes ({orderCounts.pending})
+              </Button>
+              <Button
+                variant={statusFilter === 'in-progress' ? "default" : "outline"}
+                onClick={() => setStatusFilter('in-progress')}
+                className="flex-1 min-w-[150px] max-w-xs"
+              >
+                Em Andamento ({orderCounts['in-progress']})
+              </Button>
+              <Button
+                variant={statusFilter === 'completed' ? "default" : "outline"}
+                onClick={() => setStatusFilter('completed')}
+                className="flex-1 min-w-[150px] max-w-xs"
+              >
+                Concluídos ({orderCounts.completed})
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </main>
     </div>
   );
