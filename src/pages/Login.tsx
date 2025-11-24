@@ -13,6 +13,7 @@ export default function Login() {
   const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [username, setUsername] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
 
@@ -67,10 +68,23 @@ export default function Login() {
     setIsLoading(true);
 
     try {
+      if (!username.trim()) {
+        toast({
+          title: "Campo obrigatório",
+          description: "Por favor, insira um nome de usuário.",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
+          data: {
+            username: username.trim(),
+          },
           emailRedirectTo: `${window.location.origin}/admin`,
         },
       });
@@ -92,6 +106,7 @@ export default function Login() {
         setIsSignUp(false);
         setEmail("");
         setPassword("");
+        setUsername("");
       }
     } catch (error) {
       toast({
@@ -153,6 +168,20 @@ export default function Login() {
                   />
                 </div>
               </div>
+
+              {isSignUp && (
+                <div className="space-y-2">
+                  <Label htmlFor="username">Nome de Usuário</Label>
+                  <Input
+                    id="username"
+                    type="text"
+                    placeholder="Seu nome"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    required
+                  />
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="password">Senha</Label>

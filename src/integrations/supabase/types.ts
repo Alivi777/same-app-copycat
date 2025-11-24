@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           additional_notes: string | null
           address: string | null
+          assigned_to: string | null
           clinic_name: string | null
           color: string | null
           created_at: string
@@ -41,6 +42,7 @@ export type Database = {
         Insert: {
           additional_notes?: string | null
           address?: string | null
+          assigned_to?: string | null
           clinic_name?: string | null
           color?: string | null
           created_at?: string
@@ -64,6 +66,7 @@ export type Database = {
         Update: {
           additional_notes?: string | null
           address?: string | null
+          assigned_to?: string | null
           clinic_name?: string | null
           color?: string | null
           created_at?: string
@@ -83,6 +86,35 @@ export type Database = {
           smile_photo_url?: string | null
           status?: string
           updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          id: string
+          user_id: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          user_id: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          user_id?: string
+          username?: string
         }
         Relationships: []
       }

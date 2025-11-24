@@ -66,6 +66,7 @@ export default function Admin() {
   const [session, setSession] = useState<Session | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [users, setUsers] = useState<any[]>([]);
 
   useEffect(() => {
     // Check authentication and admin role
@@ -99,6 +100,7 @@ export default function Admin() {
 
       setIsAdmin(true);
       fetchOrders();
+      fetchUsers();
     };
 
     checkAuth();
@@ -136,7 +138,10 @@ export default function Admin() {
     try {
       const { data, error } = await supabase
         .from('orders')
-        .select('*')
+        .select(`
+          *,
+          assigned_user:profiles!orders_assigned_to_fkey(username)
+        `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -145,6 +150,20 @@ export default function Admin() {
       console.error('Error fetching orders:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('user_id, username')
+        .order('username');
+
+      if (error) throw error;
+      setUsers(data || []);
+    } catch (error) {
+      console.error('Error fetching users:', error);
     }
   };
 
@@ -210,6 +229,29 @@ export default function Admin() {
     }
   };
 
+  const handleAssignUser = async (orderId: string, userId: string | null) => {
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ assigned_to: userId })
+        .eq('id', orderId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Ordem atribuída",
+        description: "A ordem foi atribuída com sucesso.",
+      });
+    } catch (error) {
+      console.error('Error assigning order:', error);
+      toast({
+        title: "Erro ao atribuir",
+        description: "Não foi possível atribuir a ordem.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const filteredOrders = statusFilter 
     ? orders.filter(order => order.status === statusFilter)
     : orders;
@@ -262,7 +304,7 @@ export default function Admin() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>ID</TableHead>
+                  <TableHead>Atribuído a</TableHead>
                   <TableHead>Paciente</TableHead>
                   <TableHead>Dentista</TableHead>
                   <TableHead>Data</TableHead>
@@ -288,7 +330,24 @@ export default function Admin() {
                 ) : (
                   filteredOrders.map((order) => (
                     <TableRow key={order.id}>
-                      <TableCell className="font-medium">{order.order_number}</TableCell>
+                      <TableCell>
+                        <Select 
+                          value={order.assigned_to || "unassigned"} 
+                          onValueChange={(value) => handleAssignUser(order.id, value === "unassigned" ? null : value)}
+                        >
+                          <SelectTrigger className="w-[160px]">
+                            <SelectValue placeholder="Não atribuído" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="unassigned">Não atribuído</SelectItem>
+                            {users.map((user) => (
+                              <SelectItem key={user.user_id} value={user.user_id}>
+                                {user.username}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
                       <TableCell>{order.patient_name}</TableCell>
                       <TableCell>{order.dentist_name}</TableCell>
                       <TableCell>{new Date(order.date).toLocaleDateString("pt-BR")}</TableCell>
