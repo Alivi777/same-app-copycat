@@ -393,14 +393,13 @@ export default function Admin() {
                         </Select>
                       </TableCell>
                       <TableCell className="text-right">
-                        {(order.smile_photo_url || order.scan_file_url) ? (
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button variant="outline" size="sm">
-                                <Eye className="mr-1 h-4 w-4" />
-                                Ver Arquivos
-                              </Button>
-                            </DialogTrigger>
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" size="sm">
+                              <Eye className="mr-1 h-4 w-4" />
+                              Visualizar Pedido
+                            </Button>
+                          </DialogTrigger>
                             <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
                               <DialogHeader>
                                 <DialogTitle>Detalhes - OS {order.order_number}</DialogTitle>
@@ -545,10 +544,7 @@ export default function Admin() {
                                  </div>
                                </div>
                              </DialogContent>
-                           </Dialog>
-                        ) : (
-                          <span className="text-muted-foreground text-sm">Sem arquivos</span>
-                        )}
+                            </Dialog>
                       </TableCell>
                       <TableCell className="text-right">
                         <AlertDialog>
