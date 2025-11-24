@@ -444,6 +444,12 @@ export default function Admin() {
                                       <span className="font-medium">Paciente:</span>
                                       <span>{order.patient_name}</span>
                                     </div>
+                                    {order.patient_id && (
+                                      <div className="flex gap-2">
+                                        <span className="font-medium">ID do Paciente:</span>
+                                        <span>{order.patient_id}</span>
+                                      </div>
+                                    )}
                                     <div className="flex gap-2">
                                       <span className="font-medium">Dentista:</span>
                                       <span>{order.dentist_name}</span>
