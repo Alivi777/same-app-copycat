@@ -67,6 +67,7 @@ export default function Admin() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [users, setUsers] = useState<any[]>([]);
+  const [isPriorityFilter, setIsPriorityFilter] = useState(false);
 
   useEffect(() => {
     // Check authentication and admin role
@@ -290,7 +291,34 @@ export default function Admin() {
     }
   };
 
-  const filteredOrders = statusFilter 
+  const handleDeliveryDeadlineChange = async (orderId: string, newDeadline: string) => {
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ delivery_deadline: newDeadline })
+        .eq('id', orderId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Data atualizada",
+        description: "O prazo de entrega foi alterado com sucesso.",
+      });
+    } catch (error) {
+      console.error('Error updating delivery deadline:', error);
+      toast({
+        title: "Erro ao atualizar",
+        description: "Não foi possível atualizar o prazo de entrega.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const filteredOrders = isPriorityFilter
+    ? [...orders]
+        .filter(order => order.delivery_deadline)
+        .sort((a, b) => new Date(a.delivery_deadline).getTime() - new Date(b.delivery_deadline).getTime())
+    : statusFilter 
     ? orders.filter(order => order.status === statusFilter)
     : orders;
 
@@ -485,9 +513,14 @@ export default function Admin() {
                                       <span className="font-medium">Cor / Tonalidade:</span>
                                       <span>{order.color || '-'}</span>
                                     </div>
-                                    <div className="flex gap-2">
+                                    <div className="flex gap-2 items-center">
                                       <span className="font-medium">Prazo de Entrega:</span>
-                                      <span>{order.delivery_deadline ? new Date(order.delivery_deadline).toLocaleDateString("pt-BR") : '-'}</span>
+                                      <Input 
+                                        type="date"
+                                        value={order.delivery_deadline || ''}
+                                        onChange={(e) => handleDeliveryDeadlineChange(order.id, e.target.value)}
+                                        className="w-auto"
+                                      />
                                     </div>
                                   </div>
                                 </div>
@@ -581,22 +614,31 @@ export default function Admin() {
           <CardContent className="pt-6">
             <div className="flex gap-3 justify-center flex-wrap">
               <Button
-                variant={statusFilter === null ? "default" : "outline"}
-                onClick={() => setStatusFilter(null)}
+                variant={statusFilter === null && !isPriorityFilter ? "default" : "outline"}
+                onClick={() => {
+                  setStatusFilter(null);
+                  setIsPriorityFilter(false);
+                }}
                 className="flex-1 min-w-[150px] max-w-xs"
               >
                 Todos ({orders.length})
               </Button>
               <Button
                 variant={statusFilter === 'pending' ? "default" : "outline"}
-                onClick={() => setStatusFilter('pending')}
+                onClick={() => {
+                  setStatusFilter('pending');
+                  setIsPriorityFilter(false);
+                }}
                 className="flex-1 min-w-[150px] max-w-xs"
               >
                 Pendentes ({orderCounts.pending})
               </Button>
               <Button
                 variant="outline"
-                onClick={() => setStatusFilter('in-progress')}
+                onClick={() => {
+                  setStatusFilter('in-progress');
+                  setIsPriorityFilter(false);
+                }}
                 className={`flex-1 min-w-[150px] max-w-xs ${
                   statusFilter === 'in-progress' 
                     ? 'bg-info text-info-foreground hover:bg-info/90 border-info' 
@@ -607,7 +649,10 @@ export default function Admin() {
               </Button>
               <Button
                 variant="outline"
-                onClick={() => setStatusFilter('completed')}
+                onClick={() => {
+                  setStatusFilter('completed');
+                  setIsPriorityFilter(false);
+                }}
                 className={`flex-1 min-w-[150px] max-w-xs ${
                   statusFilter === 'completed' 
                     ? 'bg-success text-success-foreground hover:bg-success/90 border-success' 
@@ -615,6 +660,20 @@ export default function Admin() {
                 }`}
               >
                 Concluídos ({orderCounts.completed})
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setStatusFilter(null);
+                  setIsPriorityFilter(true);
+                }}
+                className={`flex-1 min-w-[150px] max-w-xs ${
+                  isPriorityFilter 
+                    ? 'bg-warning text-warning-foreground hover:bg-warning/90 border-warning' 
+                    : ''
+                }`}
+              >
+                Prioridade ({orders.filter(o => o.delivery_deadline).length})
               </Button>
             </div>
           </CardContent>
