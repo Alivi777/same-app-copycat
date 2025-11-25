@@ -316,8 +316,15 @@ export default function Admin() {
 
   const filteredOrders = isPriorityFilter
     ? [...orders]
-        .filter(order => order.delivery_deadline)
-        .sort((a, b) => new Date(a.delivery_deadline).getTime() - new Date(b.delivery_deadline).getTime())
+        .filter(order => order.status === 'pending' || order.status === 'in-progress')
+        .sort((a, b) => {
+          // Pedidos sem data vão para o final
+          if (!a.delivery_deadline && !b.delivery_deadline) return 0;
+          if (!a.delivery_deadline) return 1;
+          if (!b.delivery_deadline) return -1;
+          // Ordenar por data mais próxima
+          return new Date(a.delivery_deadline).getTime() - new Date(b.delivery_deadline).getTime();
+        })
     : statusFilter 
     ? orders.filter(order => order.status === statusFilter)
     : orders;
