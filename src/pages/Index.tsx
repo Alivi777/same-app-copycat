@@ -16,6 +16,10 @@ export default function Index() {
   const [selectedTeeth, setSelectedTeeth] = useState<string[]>([]);
   const [smilePhoto, setSmilePhoto] = useState<File | null>(null);
   const [scanFile, setScanFile] = useState<File | null>(null);
+  const [material, setMaterial] = useState<string>("");
+  const [prosthesisType, setProsthesisType] = useState<string>("");
+  const [color, setColor] = useState<string>("");
+  const [deliveryDeadline, setDeliveryDeadline] = useState<string>("");
 
   const form = useForm({
     defaultValues: {
@@ -82,6 +86,10 @@ export default function Index() {
           smile_photo_url: smilePhotoUrl,
           scan_file_url: scanFileUrl,
           additional_notes: data.additionalNotes,
+          material: material || null,
+          prosthesis_type: prosthesisType || null,
+          color: color || null,
+          delivery_deadline: deliveryDeadline || null,
           status: 'pending'
         });
 
@@ -97,6 +105,10 @@ export default function Index() {
       setSelectedTeeth([]);
       setSmilePhoto(null);
       setScanFile(null);
+      setMaterial("");
+      setProsthesisType("");
+      setColor("");
+      setDeliveryDeadline("");
     } catch (error) {
       console.error('Error submitting order:', error);
       toast({
@@ -299,7 +311,16 @@ export default function Index() {
             <ToothSelection onSelectionChange={setSelectedTeeth} />
 
             {/* Technical Configuration */}
-            <ToothConfiguration />
+            <ToothConfiguration 
+              material={material}
+              prosthesisType={prosthesisType}
+              color={color}
+              deliveryDeadline={deliveryDeadline}
+              onMaterialChange={setMaterial}
+              onProsthesisTypeChange={setProsthesisType}
+              onColorChange={setColor}
+              onDeliveryDeadlineChange={setDeliveryDeadline}
+            />
 
             {/* File Upload Section */}
             <Card>
