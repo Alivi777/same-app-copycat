@@ -380,7 +380,7 @@ export default function Admin() {
                   <TableHead>Atribuído a</TableHead>
                   <TableHead>Paciente</TableHead>
                   <TableHead>Dentista</TableHead>
-                  <TableHead>Data</TableHead>
+                  <TableHead>Prazo de Entrega</TableHead>
                   <TableHead>Dentes</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Arquivos</TableHead>
@@ -410,7 +410,11 @@ export default function Admin() {
                       </TableCell>
                       <TableCell>{order.patient_name}</TableCell>
                       <TableCell>{order.dentist_name}</TableCell>
-                      <TableCell>{new Date(order.date).toLocaleDateString("pt-BR")}</TableCell>
+                      <TableCell>
+                        {order.delivery_deadline 
+                          ? new Date(order.delivery_deadline).toLocaleDateString("pt-BR")
+                          : '-'}
+                      </TableCell>
                       <TableCell>{order.selected_teeth?.join(', ') || '-'}</TableCell>
                       <TableCell>
                         <Select 
