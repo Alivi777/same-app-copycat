@@ -253,6 +253,29 @@ export default function Admin() {
     }
   };
 
+  const handleColorChange = async (orderId: string, newColor: string) => {
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ color: newColor })
+        .eq('id', orderId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Cor atualizada",
+        description: "A cor do pedido foi atualizada com sucesso.",
+      });
+    } catch (error) {
+      console.error('Error updating color:', error);
+      toast({
+        title: "Erro ao atualizar cor",
+        description: "Não foi possível atualizar a cor do pedido.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleAssignUser = async (orderId: string, userId: string | null) => {
     try {
       const { error } = await supabase
@@ -404,7 +427,7 @@ export default function Admin() {
                   <TableHead>Paciente</TableHead>
                   <TableHead>Material</TableHead>
                   <TableHead>Prazo de Entrega</TableHead>
-                  <TableHead>Dentes</TableHead>
+                  <TableHead>Cor</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Arquivos</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
@@ -432,7 +455,7 @@ export default function Admin() {
                           const getUserColor = (name: string) => {
                             switch(name.toLowerCase()) {
                               case 'alexandre': return 'bg-purple-600 text-white';
-                              case 'carneiro': return 'bg-yellow-500 text-black';
+                              case 'carneiro': return 'bg-cyan-500 text-white';
                               case 'henrique': return 'bg-amber-800 text-white';
                               default: return 'bg-gray-600 text-white';
                             }
@@ -468,7 +491,26 @@ export default function Admin() {
                           ? new Date(order.delivery_deadline).toLocaleDateString("pt-BR")
                           : '-'}
                       </TableCell>
-                      <TableCell>{order.selected_teeth?.join(', ') || '-'}</TableCell>
+                      <TableCell>
+                        <Select
+                          value={order.color || ""}
+                          onValueChange={(value) => handleColorChange(order.id, value)}
+                        >
+                          <SelectTrigger className="w-[120px]">
+                            <SelectValue placeholder="Selecionar" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="BL1">BL1</SelectItem>
+                            <SelectItem value="BL2">BL2</SelectItem>
+                            <SelectItem value="BL3">BL3</SelectItem>
+                            <SelectItem value="BL4">BL4</SelectItem>
+                            <SelectItem value="A1">A1</SelectItem>
+                            <SelectItem value="A2">A2</SelectItem>
+                            <SelectItem value="A3">A3</SelectItem>
+                            <SelectItem value="WHITE">WHITE</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
                       <TableCell>
                         <Select 
                           value={order.status} 
