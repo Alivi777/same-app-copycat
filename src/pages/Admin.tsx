@@ -487,9 +487,25 @@ export default function Admin() {
                         </Select>
                       </TableCell>
                       <TableCell>
-                        {order.delivery_deadline 
-                          ? new Date(order.delivery_deadline).toLocaleDateString("pt-BR")
-                          : '-'}
+                        {order.delivery_deadline ? (() => {
+                          const deadline = new Date(order.delivery_deadline);
+                          const today = new Date();
+                          today.setHours(0, 0, 0, 0);
+                          deadline.setHours(0, 0, 0, 0);
+                          const daysUntilDeadline = Math.ceil((deadline.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                          
+                          const getDeadlineColor = () => {
+                            if (daysUntilDeadline <= 2) return 'bg-red-600 text-white';
+                            if (daysUntilDeadline <= 4) return 'bg-yellow-500 text-black';
+                            return 'bg-green-600 text-white';
+                          };
+                          
+                          return (
+                            <span className={`px-3 py-1 rounded ${getDeadlineColor()} font-medium`}>
+                              {deadline.toLocaleDateString("pt-BR")}
+                            </span>
+                          );
+                        })() : '-'}
                       </TableCell>
                       <TableCell>
                         <Select
@@ -720,14 +736,18 @@ export default function Admin() {
           <CardContent className="pt-6">
             <div className="flex gap-3 justify-center flex-wrap">
               <Button
-                variant={statusFilter === null && !isPriorityFilter ? "default" : "outline"}
+                variant="outline"
                 onClick={() => {
                   setStatusFilter(null);
-                  setIsPriorityFilter(false);
+                  setIsPriorityFilter(true);
                 }}
-                className="flex-1 min-w-[150px] max-w-xs"
+                className={`flex-1 min-w-[150px] max-w-xs ${
+                  isPriorityFilter 
+                    ? 'bg-warning text-warning-foreground hover:bg-warning/90 border-warning' 
+                    : ''
+                }`}
               >
-                Todos ({orders.length})
+                Prioridade ({orders.filter(o => o.delivery_deadline).length})
               </Button>
               <Button
                 variant={statusFilter === 'pending' ? "default" : "outline"}
@@ -768,18 +788,14 @@ export default function Admin() {
                 Concluídos ({orderCounts.completed})
               </Button>
               <Button
-                variant="outline"
+                variant={statusFilter === null && !isPriorityFilter ? "default" : "outline"}
                 onClick={() => {
                   setStatusFilter(null);
-                  setIsPriorityFilter(true);
+                  setIsPriorityFilter(false);
                 }}
-                className={`flex-1 min-w-[150px] max-w-xs ${
-                  isPriorityFilter 
-                    ? 'bg-warning text-warning-foreground hover:bg-warning/90 border-warning' 
-                    : ''
-                }`}
+                className="flex-1 min-w-[150px] max-w-xs"
               >
-                Prioridade ({orders.filter(o => o.delivery_deadline).length})
+                Todos ({orders.length})
               </Button>
             </div>
           </CardContent>
