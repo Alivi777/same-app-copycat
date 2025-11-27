@@ -230,6 +230,29 @@ export default function Admin() {
     }
   };
 
+  const handleMaterialChange = async (orderId: string, newMaterial: string) => {
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ material: newMaterial })
+        .eq('id', orderId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Material atualizado",
+        description: "O material do pedido foi atualizado com sucesso.",
+      });
+    } catch (error) {
+      console.error('Error updating material:', error);
+      toast({
+        title: "Erro ao atualizar material",
+        description: "Não foi possível atualizar o material do pedido.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleAssignUser = async (orderId: string, userId: string | null) => {
     try {
       const { error } = await supabase
@@ -379,7 +402,7 @@ export default function Admin() {
                 <TableRow>
                   <TableHead>Atribuído a</TableHead>
                   <TableHead>Paciente</TableHead>
-                  <TableHead>Dentista</TableHead>
+                  <TableHead>Material</TableHead>
                   <TableHead>Prazo de Entrega</TableHead>
                   <TableHead>Dentes</TableHead>
                   <TableHead>Status</TableHead>
@@ -422,7 +445,24 @@ export default function Admin() {
                         })() : '-'}
                       </TableCell>
                       <TableCell>{order.patient_name}</TableCell>
-                      <TableCell>{order.dentist_name}</TableCell>
+                      <TableCell>
+                        <Select
+                          value={order.material || ""}
+                          onValueChange={(value) => handleMaterialChange(order.id, value)}
+                        >
+                          <SelectTrigger className="w-[140px]">
+                            <SelectValue placeholder="Selecionar" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Dissilicato">Dissilicato</SelectItem>
+                            <SelectItem value="Zirconia">Zirconia</SelectItem>
+                            <SelectItem value="PMMA">PMMA</SelectItem>
+                            <SelectItem value="Cera">Cera</SelectItem>
+                            <SelectItem value="Resina 3D">Resina 3D</SelectItem>
+                            <SelectItem value="Gesso">Gesso</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
                       <TableCell>
                         {order.delivery_deadline 
                           ? new Date(order.delivery_deadline).toLocaleDateString("pt-BR")
