@@ -404,9 +404,22 @@ export default function Admin() {
                   filteredOrders.map((order) => (
                     <TableRow key={order.id}>
                       <TableCell>
-                        {order.assigned_to 
-                          ? users.find(u => u.user_id === order.assigned_to)?.username || 'Usuário'
-                          : '-'}
+                        {order.assigned_to ? (() => {
+                          const username = users.find(u => u.user_id === order.assigned_to)?.username || 'Usuário';
+                          const getUserColor = (name: string) => {
+                            switch(name.toLowerCase()) {
+                              case 'alexandre': return 'bg-purple-600 text-white';
+                              case 'carneiro': return 'bg-yellow-500 text-black';
+                              case 'henrique': return 'bg-amber-800 text-white';
+                              default: return 'bg-gray-600 text-white';
+                            }
+                          };
+                          return (
+                            <span className={`px-3 py-1 rounded ${getUserColor(username)} font-medium`}>
+                              {username}
+                            </span>
+                          );
+                        })() : '-'}
                       </TableCell>
                       <TableCell>{order.patient_name}</TableCell>
                       <TableCell>{order.dentist_name}</TableCell>
