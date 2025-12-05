@@ -65,7 +65,7 @@ export default function Admin() {
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState<Session | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string | null>('pending');
   const [users, setUsers] = useState<any[]>([]);
   const [isPriorityFilter, setIsPriorityFilter] = useState(false);
 
@@ -524,6 +524,7 @@ export default function Admin() {
                             <SelectItem value="A2">A2</SelectItem>
                             <SelectItem value="A3">A3</SelectItem>
                             <SelectItem value="WHITE">WHITE</SelectItem>
+                            <SelectItem value="Clear">Clear</SelectItem>
                           </SelectContent>
                         </Select>
                       </TableCell>
