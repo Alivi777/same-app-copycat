@@ -172,13 +172,21 @@ export default function Admin() {
   };
 
   const getStatusBadge = (status: string) => {
-    const statusConfig = {
-      pending: { label: "Pendente", variant: "secondary" as const },
-      "in-progress": { label: "Em Andamento", variant: "default" as const },
-      completed: { label: "Concluído", variant: "outline" as const },
+    const statusConfig: Record<string, { label: string; variant: "secondary" | "default" | "outline" | "destructive" }> = {
+      pending: { label: "Pendente", variant: "secondary" },
+      "in-progress": { label: "Em Andamento", variant: "default" },
+      completed: { label: "Concluído", variant: "outline" },
+      projetando: { label: "Projetando", variant: "default" },
+      projetado: { label: "Projetado", variant: "default" },
+      "fresado-provisorio": { label: "Fresado Provisório", variant: "default" },
+      "fresado-definitivo": { label: "Fresado Definitivo", variant: "default" },
+      maquiagem: { label: "Maquiagem", variant: "default" },
+      "entregue-provisorio": { label: "Entregue Provisório", variant: "default" },
+      vazado: { label: "Vazado", variant: "default" },
+      pureto: { label: "Pureto", variant: "default" },
     };
 
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
+    const config = statusConfig[status] || { label: status, variant: "secondary" as const };
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
@@ -369,12 +377,27 @@ export default function Admin() {
     return user?.user_id || null;
   };
 
+  // Define in-progress sub-statuses
+  const inProgressStatuses = [
+    'in-progress',
+    'projetando',
+    'projetado',
+    'fresado-provisorio',
+    'fresado-definitivo',
+    'maquiagem',
+    'entregue-provisorio',
+    'vazado',
+    'pureto'
+  ];
+
   const filteredOrders = (() => {
     let result = orders;
     
     // Apply status filter first
     if (isPriorityFilter) {
-      result = result.filter(order => order.status === 'pending' || order.status === 'in-progress');
+      result = result.filter(order => order.status === 'pending' || inProgressStatuses.includes(order.status));
+    } else if (statusFilter === 'in-progress') {
+      result = result.filter(order => inProgressStatuses.includes(order.status));
     } else if (statusFilter) {
       result = result.filter(order => order.status === statusFilter);
     }
@@ -412,7 +435,7 @@ export default function Admin() {
 
   const orderCounts = {
     pending: orders.filter(o => o.status === 'pending').length,
-    'in-progress': orders.filter(o => o.status === 'in-progress').length,
+    'in-progress': orders.filter(o => inProgressStatuses.includes(o.status)).length,
     completed: orders.filter(o => o.status === 'completed').length,
   };
 
@@ -615,13 +638,28 @@ export default function Admin() {
                           value={order.status} 
                           onValueChange={(value) => handleStatusChange(order.id, value)}
                         >
-                          <SelectTrigger className="w-[160px]">
+                          <SelectTrigger className="w-[180px]">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="pending">Pendente</SelectItem>
-                            <SelectItem value="in-progress">Em Andamento</SelectItem>
-                            <SelectItem value="completed">Concluído</SelectItem>
+                            {statusFilter === 'in-progress' ? (
+                              <>
+                                <SelectItem value="projetando">Projetando</SelectItem>
+                                <SelectItem value="projetado">Projetado</SelectItem>
+                                <SelectItem value="fresado-provisorio">Fresado Provisório</SelectItem>
+                                <SelectItem value="fresado-definitivo">Fresado Definitivo</SelectItem>
+                                <SelectItem value="maquiagem">Maquiagem</SelectItem>
+                                <SelectItem value="entregue-provisorio">Entregue Provisório</SelectItem>
+                                <SelectItem value="vazado">Vazado</SelectItem>
+                                <SelectItem value="pureto">Pureto</SelectItem>
+                              </>
+                            ) : (
+                              <>
+                                <SelectItem value="pending">Pendente</SelectItem>
+                                <SelectItem value="in-progress">Em Andamento</SelectItem>
+                                <SelectItem value="completed">Concluído</SelectItem>
+                              </>
+                            )}
                           </SelectContent>
                         </Select>
                       </TableCell>
