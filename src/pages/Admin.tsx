@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { FileText, LogOut, Search, Eye } from "lucide-react";
+import { FileText, LogOut, Eye, Filter } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -68,6 +68,9 @@ export default function Admin() {
   const [statusFilter, setStatusFilter] = useState<string | null>('pending');
   const [users, setUsers] = useState<any[]>([]);
   const [isPriorityFilter, setIsPriorityFilter] = useState(false);
+  const [userFilter, setUserFilter] = useState<string | null>(null);
+  const [materialFilter, setMaterialFilter] = useState<string | null>(null);
+  const [colorFilter, setColorFilter] = useState<string | null>(null);
 
   useEffect(() => {
     // Check authentication and admin role
@@ -360,20 +363,52 @@ export default function Admin() {
     }
   };
 
-  const filteredOrders = isPriorityFilter
-    ? [...orders]
-        .filter(order => order.status === 'pending' || order.status === 'in-progress')
-        .sort((a, b) => {
-          // Pedidos sem data vão para o final
-          if (!a.delivery_deadline && !b.delivery_deadline) return 0;
-          if (!a.delivery_deadline) return 1;
-          if (!b.delivery_deadline) return -1;
-          // Ordenar por data mais próxima
-          return new Date(a.delivery_deadline).getTime() - new Date(b.delivery_deadline).getTime();
-        })
-    : statusFilter 
-    ? orders.filter(order => order.status === statusFilter)
-    : orders;
+  // Helper function to get user_id from username
+  const getUserIdByUsername = (username: string) => {
+    const user = users.find(u => u.username.toLowerCase() === username.toLowerCase());
+    return user?.user_id || null;
+  };
+
+  const filteredOrders = (() => {
+    let result = orders;
+    
+    // Apply status filter first
+    if (isPriorityFilter) {
+      result = result.filter(order => order.status === 'pending' || order.status === 'in-progress');
+    } else if (statusFilter) {
+      result = result.filter(order => order.status === statusFilter);
+    }
+    
+    // Apply user filter
+    if (userFilter) {
+      const userId = getUserIdByUsername(userFilter);
+      if (userId) {
+        result = result.filter(order => order.assigned_to === userId);
+      }
+    }
+    
+    // Apply material filter
+    if (materialFilter) {
+      result = result.filter(order => order.material === materialFilter);
+    }
+    
+    // Apply color filter
+    if (colorFilter) {
+      result = result.filter(order => order.color === colorFilter);
+    }
+    
+    // Sort by priority if priority filter is active
+    if (isPriorityFilter) {
+      result = [...result].sort((a, b) => {
+        if (!a.delivery_deadline && !b.delivery_deadline) return 0;
+        if (!a.delivery_deadline) return 1;
+        if (!b.delivery_deadline) return -1;
+        return new Date(a.delivery_deadline).getTime() - new Date(b.delivery_deadline).getTime();
+      });
+    }
+    
+    return result;
+  })();
 
   const orderCounts = {
     pending: orders.filter(o => o.status === 'pending').length,
@@ -411,11 +446,58 @@ export default function Admin() {
                 <FileText className="text-burgundy-500" size={20} />
                 Ordens de Serviço
               </CardTitle>
-              <div className="flex gap-2">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-                  <Input placeholder="Buscar ordem..." className="pl-10 w-64" />
-                </div>
+              <div className="flex gap-2 items-center">
+                <Filter className="text-gray-400" size={18} />
+                <Select
+                  value={userFilter || "all"}
+                  onValueChange={(value) => setUserFilter(value === "all" ? null : value)}
+                >
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue placeholder="Usuário" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos Usuários</SelectItem>
+                    <SelectItem value="Alexandre">Alexandre</SelectItem>
+                    <SelectItem value="Carneiro">Carneiro</SelectItem>
+                    <SelectItem value="Henrique">Henrique</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select
+                  value={materialFilter || "all"}
+                  onValueChange={(value) => setMaterialFilter(value === "all" ? null : value)}
+                >
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue placeholder="Material" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos Materiais</SelectItem>
+                    <SelectItem value="Dissilicato">Dissilicato</SelectItem>
+                    <SelectItem value="Zirconia">Zirconia</SelectItem>
+                    <SelectItem value="PMMA">PMMA</SelectItem>
+                    <SelectItem value="Cera">Cera</SelectItem>
+                    <SelectItem value="Resina 3D">Resina 3D</SelectItem>
+                    <SelectItem value="Gesso">Gesso</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select
+                  value={colorFilter || "all"}
+                  onValueChange={(value) => setColorFilter(value === "all" ? null : value)}
+                >
+                  <SelectTrigger className="w-[120px]">
+                    <SelectValue placeholder="Cor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas Cores</SelectItem>
+                    <SelectItem value="BL1">BL1</SelectItem>
+                    <SelectItem value="BL2">BL2</SelectItem>
+                    <SelectItem value="BL3">BL3</SelectItem>
+                    <SelectItem value="BL4">BL4</SelectItem>
+                    <SelectItem value="A1">A1</SelectItem>
+                    <SelectItem value="A2">A2</SelectItem>
+                    <SelectItem value="A3">A3</SelectItem>
+                    <SelectItem value="WHITE">WHITE</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </CardHeader>
