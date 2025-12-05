@@ -668,7 +668,7 @@ export default function Admin() {
                           <DialogTrigger asChild>
                             <Button variant="outline" size="sm">
                               <Eye className="mr-1 h-4 w-4" />
-                              Visualizar Pedido
+                              Pedido
                             </Button>
                           </DialogTrigger>
                             <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
