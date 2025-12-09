@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { FileText, LogOut, Eye, Filter, CheckCircle } from "lucide-react";
+import { FileText, LogOut, Eye, Filter, CheckCircle, RefreshCw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -470,6 +470,14 @@ export default function Admin() {
                 Ordens de Serviço
               </CardTitle>
               <div className="flex gap-2 items-center">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => fetchOrders()}
+                  title="Atualizar pedidos"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                </Button>
                 <Filter className="text-gray-400" size={18} />
                 <Select
                   value={userFilter || "all"}
