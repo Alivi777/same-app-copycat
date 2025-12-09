@@ -601,10 +601,11 @@ export default function Admin() {
                       </TableCell>
                       <TableCell>
                         {order.delivery_deadline ? (() => {
-                          const deadline = new Date(order.delivery_deadline);
+                          // Parse date without timezone conversion
+                          const [year, month, day] = order.delivery_deadline.split('-').map(Number);
+                          const deadline = new Date(year, month - 1, day);
                           const today = new Date();
                           today.setHours(0, 0, 0, 0);
-                          deadline.setHours(0, 0, 0, 0);
                           const daysUntilDeadline = Math.ceil((deadline.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
                           
                           const getDeadlineColor = () => {
