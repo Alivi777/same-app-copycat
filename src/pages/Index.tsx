@@ -138,7 +138,7 @@ export default function Index() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <img src="/tooth-selection-icon.png" alt="Logo" className="w-8 h-8" />
+              <img src="/header-logo-new.png" alt="Logo" className="w-8 h-8" />
               <h1 className="text-2xl font-bold text-gray-900">Laboratório Odontológico</h1>
             </div>
             <Button variant="outline" onClick={() => window.location.href = "/login"}>
