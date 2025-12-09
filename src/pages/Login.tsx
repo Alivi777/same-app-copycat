@@ -137,7 +137,7 @@ export default function Login() {
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center space-x-3 mb-4">
-            <img src="/tooth-selection-icon.png" alt="Logo" className="w-8 h-8" />
+            <img src="/header-logo-new.png" alt="Logo" className="w-8 h-8" />
             <h1 className="text-2xl font-bold text-gray-900">Laboratório Odontológico</h1>
           </div>
           <p className="text-gray-600">Painel Administrativo</p>
