@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ToothSelection } from "@/components/tooth-selection";
+import { ToothSelection, ToothConfig } from "@/components/tooth-selection";
 import { ToothConfiguration } from "@/components/tooth-configuration";
 import { User, FileText, Upload, Phone, Mail, MapPin, Calendar } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -13,11 +13,11 @@ import { supabase } from "@/integrations/supabase/client";
 
 export default function Index() {
   const { toast } = useToast();
-  const [selectedTeeth, setSelectedTeeth] = useState<string[]>([]);
+  const [toothConfigs, setToothConfigs] = useState<ToothConfig[]>([]);
   const [smilePhoto, setSmilePhoto] = useState<File | null>(null);
   const [scanFile, setScanFile] = useState<File | null>(null);
   const [material, setMaterial] = useState<string>("");
-  const [prosthesisType, setProsthesisType] = useState<string>("");
+  
   const [color, setColor] = useState<string>("");
   const [deliveryDeadline, setDeliveryDeadline] = useState<string>("");
 
@@ -82,12 +82,12 @@ export default function Index() {
           email: data.email,
           address: data.address,
           date: data.date || null,
-          selected_teeth: selectedTeeth,
+          selected_teeth: toothConfigs.map(c => c.toothNumber),
           smile_photo_url: smilePhotoUrl,
           scan_file_url: scanFileUrl,
-          additional_notes: data.additionalNotes,
+          additional_notes: data.additionalNotes + (toothConfigs.length > 0 ? `\n\n--- Configuração por Dente ---\n${toothConfigs.map(c => `Dente ${c.toothNumber}: ${c.workType}${c.implantType ? ` (${c.implantType})` : ''}`).join('\n')}` : ''),
           material: material || null,
-          prosthesis_type: prosthesisType || null,
+          prosthesis_type: null,
           color: color || null,
           delivery_deadline: deliveryDeadline || null,
           status: 'pending'
@@ -102,11 +102,10 @@ export default function Index() {
 
       // Reset form
       form.reset();
-      setSelectedTeeth([]);
+      setToothConfigs([]);
       setSmilePhoto(null);
       setScanFile(null);
       setMaterial("");
-      setProsthesisType("");
       setColor("");
       setDeliveryDeadline("");
     } catch (error) {
@@ -308,16 +307,14 @@ export default function Index() {
             </Card>
 
             {/* Tooth Selection */}
-            <ToothSelection onSelectionChange={setSelectedTeeth} />
+            <ToothSelection onSelectionChange={setToothConfigs} />
 
             {/* Technical Configuration */}
             <ToothConfiguration 
               material={material}
-              prosthesisType={prosthesisType}
               color={color}
               deliveryDeadline={deliveryDeadline}
               onMaterialChange={setMaterial}
-              onProsthesisTypeChange={setProsthesisType}
               onColorChange={setColor}
               onDeliveryDeadlineChange={setDeliveryDeadline}
             />
