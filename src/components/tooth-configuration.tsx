@@ -42,11 +42,10 @@ export function ToothConfiguration({
                 <SelectValue placeholder="Selecione o material" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="porcelana">Porcelana</SelectItem>
+                <SelectItem value="dissilicato">Dissilicato</SelectItem>
+                <SelectItem value="zirconia">Zirconia</SelectItem>
+                <SelectItem value="pmma">PMMA</SelectItem>
                 <SelectItem value="resina">Resina</SelectItem>
-                <SelectItem value="metalica">Metálica</SelectItem>
-                <SelectItem value="zirconia">Zircônia</SelectItem>
-                <SelectItem value="emax">E-max</SelectItem>
               </SelectContent>
             </Select>
           </div>
