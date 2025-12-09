@@ -6,22 +6,18 @@ import { Settings } from "lucide-react";
 
 interface ToothConfigurationProps {
   material?: string;
-  prosthesisType?: string;
   color?: string;
   deliveryDeadline?: string;
   onMaterialChange?: (value: string) => void;
-  onProsthesisTypeChange?: (value: string) => void;
   onColorChange?: (value: string) => void;
   onDeliveryDeadlineChange?: (value: string) => void;
 }
 
 export function ToothConfiguration({
   material,
-  prosthesisType,
   color,
   deliveryDeadline,
   onMaterialChange,
-  onProsthesisTypeChange,
   onColorChange,
   onDeliveryDeadlineChange
 }: ToothConfigurationProps) {
@@ -46,22 +42,6 @@ export function ToothConfiguration({
                 <SelectItem value="zirconia">Zirconia</SelectItem>
                 <SelectItem value="pmma">PMMA</SelectItem>
                 <SelectItem value="resina">Resina</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="tipo">Tipo de Prótese</Label>
-            <Select value={prosthesisType} onValueChange={onProsthesisTypeChange}>
-              <SelectTrigger id="tipo">
-                <SelectValue placeholder="Selecione o tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="coroa">Coroa</SelectItem>
-                <SelectItem value="ponte">Ponte</SelectItem>
-                <SelectItem value="protocolo">Protocolo</SelectItem>
-                <SelectItem value="dentadura">Dentadura</SelectItem>
-                <SelectItem value="parcial">Prótese Parcial</SelectItem>
               </SelectContent>
             </Select>
           </div>
