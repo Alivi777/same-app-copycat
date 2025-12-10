@@ -26,7 +26,7 @@ const workTypes = [
   { value: "faceta", label: "Faceta", color: "bg-cyan-500 hover:bg-cyan-600" },
   { value: "onlay", label: "Onlay", color: "bg-green-600 hover:bg-green-700" },
   { value: "enceramento", label: "Enceramento", color: "bg-emerald-400 hover:bg-emerald-500" },
-  { value: "copping", label: "Copping", color: "bg-amber-200 hover:bg-amber-300 text-amber-900" },
+  { value: "coping", label: "Coping", color: "bg-amber-200 hover:bg-amber-300 text-amber-900" },
   { value: "provisorio_oco", label: "Provisório Oco", color: "bg-yellow-600 hover:bg-yellow-700" },
   { value: "pontico", label: "Pôntico", color: "bg-rose-900 hover:bg-rose-950" },
   { value: "sob_dente", label: "Sob dente", color: "bg-purple-600 hover:bg-purple-700" },
@@ -153,6 +153,14 @@ export function ToothSelection({ onSelectionChange }: ToothSelectionProps) {
     return materials.find(t => t.value === value)?.label || value;
   };
 
+  const getMaterialAbbreviation = (value: string) => {
+    const abbreviations: Record<string, string> = {
+      zirconia: "ZrO2",
+      dissilicato: "Diss",
+    };
+    return abbreviations[value] || getMaterialLabel(value);
+  };
+
   const renderToothRow = (teeth: string[]) => (
     <div className="flex gap-2 justify-center">
       {teeth.map((tooth) => (
@@ -225,7 +233,7 @@ export function ToothSelection({ onSelectionChange }: ToothSelectionProps) {
                         <span className="opacity-80">({getImplantTypeLabel(config.implantType)})</span>
                       )}
                       {config.material && (
-                        <span className="opacity-80">[{getMaterialLabel(config.material)}]</span>
+                        <span className="opacity-80">[{getMaterialAbbreviation(config.material)}]</span>
                       )}
                       <button
                         onClick={() => removeTooth(config.toothNumber)}
