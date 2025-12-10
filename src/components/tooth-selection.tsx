@@ -22,13 +22,14 @@ interface ToothSelectionProps {
 }
 
 const workTypes = [
-  { value: "faceta", label: "Faceta", color: "bg-purple-600 hover:bg-purple-700" },
-  { value: "onlay", label: "Onlay", color: "bg-blue-600 hover:bg-blue-700" },
-  { value: "enceramento", label: "Enceramento", color: "bg-green-600 hover:bg-green-700" },
-  { value: "protocolo", label: "Protocolo", color: "bg-orange-600 hover:bg-orange-700" },
-  { value: "transformacao_sorriso", label: "Transformação de sorriso", color: "bg-pink-600 hover:bg-pink-700" },
-  { value: "sob_dente", label: "Sob dente", color: "bg-teal-600 hover:bg-teal-700" },
-  { value: "sob_implante", label: "Sob Implante", color: "bg-red-600 hover:bg-red-700" },
+  { value: "faceta", label: "Faceta", color: "bg-cyan-500 hover:bg-cyan-600" },
+  { value: "onlay", label: "Onlay", color: "bg-olive-600 hover:bg-olive-700" },
+  { value: "enceramento", label: "Enceramento", color: "bg-emerald-400 hover:bg-emerald-500" },
+  { value: "copping", label: "Copping", color: "bg-amber-200 hover:bg-amber-300 text-amber-900" },
+  { value: "provisorio_oco", label: "Provisório Oco", color: "bg-yellow-600 hover:bg-yellow-700" },
+  { value: "pontico", label: "Pôntico", color: "bg-rose-900 hover:bg-rose-950" },
+  { value: "sob_dente", label: "Sob dente", color: "bg-purple-600 hover:bg-purple-700" },
+  { value: "sob_implante", label: "Sob Implante", color: "bg-blue-800 hover:bg-blue-900" },
 ];
 
 const implantTypes = [
