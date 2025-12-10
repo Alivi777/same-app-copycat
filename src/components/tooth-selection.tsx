@@ -23,7 +23,7 @@ interface ToothSelectionProps {
 
 const workTypes = [
   { value: "faceta", label: "Faceta", color: "bg-cyan-500 hover:bg-cyan-600" },
-  { value: "onlay", label: "Onlay", color: "bg-olive-600 hover:bg-olive-700" },
+  { value: "onlay", label: "Onlay", color: "bg-green-600 hover:bg-green-700" },
   { value: "enceramento", label: "Enceramento", color: "bg-emerald-400 hover:bg-emerald-500" },
   { value: "copping", label: "Copping", color: "bg-amber-200 hover:bg-amber-300 text-amber-900" },
   { value: "provisorio_oco", label: "Provisório Oco", color: "bg-yellow-600 hover:bg-yellow-700" },
