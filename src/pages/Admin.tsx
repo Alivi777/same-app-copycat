@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { FileText, LogOut, Eye, Filter, CheckCircle, RefreshCw } from "lucide-react";
+import { FileText, LogOut, Eye, Filter, CheckCircle, RefreshCw, StickyNote } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Trash2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 
 const ImageWithSignedUrl = ({ filePath }: { filePath: string }) => {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
@@ -366,6 +367,29 @@ export default function Admin() {
       toast({
         title: "Erro ao atualizar",
         description: "Não foi possível atualizar o prazo de entrega.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleNotesChange = async (orderId: string, notes: string) => {
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ additional_notes: notes })
+        .eq('id', orderId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Anotações salvas",
+        description: "As anotações foram salvas com sucesso.",
+      });
+    } catch (error) {
+      console.error('Error updating notes:', error);
+      toast({
+        title: "Erro ao salvar",
+        description: "Não foi possível salvar as anotações.",
         variant: "destructive",
       });
     }
@@ -829,6 +853,42 @@ export default function Admin() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
+                          {/* Notes Dialog */}
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className={`${order.additional_notes ? 'text-blue-600 hover:text-blue-700 hover:bg-blue-50' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'}`}
+                                title="Bloco de notas"
+                              >
+                                <StickyNote className="h-4 w-4" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-lg">
+                              <DialogHeader>
+                                <DialogTitle className="flex items-center gap-2">
+                                  <StickyNote className="h-5 w-5" />
+                                  Anotações - OS {order.order_number}
+                                </DialogTitle>
+                              </DialogHeader>
+                              <div className="space-y-4">
+                                <div className="text-sm text-muted-foreground">
+                                  Paciente: <span className="font-medium">{order.patient_name}</span>
+                                </div>
+                                <Textarea
+                                  placeholder="Escreva suas anotações sobre este trabalho..."
+                                  defaultValue={order.additional_notes || ''}
+                                  className="min-h-[200px]"
+                                  onBlur={(e) => {
+                                    if (e.target.value !== (order.additional_notes || '')) {
+                                      handleNotesChange(order.id, e.target.value);
+                                    }
+                                  }}
+                                />
+                              </div>
+                            </DialogContent>
+                          </Dialog>
                           <Button 
                             variant="ghost" 
                             size="sm" 
