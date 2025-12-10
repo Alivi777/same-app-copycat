@@ -15,6 +15,7 @@ export interface ToothConfig {
   toothNumber: string;
   workType: string;
   implantType?: string;
+  material?: string;
 }
 
 interface ToothSelectionProps {
@@ -41,10 +42,17 @@ const implantTypes = [
   { value: "munhao_universal_4.5x6", label: "Munhão Universal (4.5x6)", color: "bg-fuchsia-600 hover:bg-fuchsia-700" },
 ];
 
+const materials = [
+  { value: "dissilicato", label: "Dissilicato", color: "bg-slate-600 hover:bg-slate-700" },
+  { value: "zirconia", label: "Zirconia", color: "bg-stone-500 hover:bg-stone-600" },
+  { value: "pmma", label: "PMMA", color: "bg-zinc-500 hover:bg-zinc-600" },
+  { value: "resina", label: "Resina", color: "bg-neutral-600 hover:bg-neutral-700" },
+];
+
 export function ToothSelection({ onSelectionChange }: ToothSelectionProps) {
   const [toothConfigs, setToothConfigs] = useState<ToothConfig[]>([]);
   const [selectedTooth, setSelectedTooth] = useState<string | null>(null);
-  const [dialogStep, setDialogStep] = useState<"workType" | "implantType">("workType");
+  const [dialogStep, setDialogStep] = useState<"workType" | "implantType" | "material">("workType");
 
   const upperRight = ["18", "17", "16", "15", "14", "13", "12", "11"];
   const upperLeft = ["21", "22", "23", "24", "25", "26", "27", "28"];
@@ -67,31 +75,20 @@ export function ToothSelection({ onSelectionChange }: ToothSelectionProps) {
   const handleWorkTypeSelect = (workType: string) => {
     if (!selectedTooth) return;
 
+    setToothConfigs((prev) => {
+      const existingIndex = prev.findIndex(c => c.toothNumber === selectedTooth);
+      if (existingIndex >= 0) {
+        const newConfigs = [...prev];
+        newConfigs[existingIndex] = { ...newConfigs[existingIndex], workType, implantType: undefined };
+        return newConfigs;
+      }
+      return [...prev, { toothNumber: selectedTooth, workType }];
+    });
+
     if (workType === "sob_implante") {
-      setToothConfigs((prev) => {
-        const existingIndex = prev.findIndex(c => c.toothNumber === selectedTooth);
-        if (existingIndex >= 0) {
-          const newConfigs = [...prev];
-          newConfigs[existingIndex] = { ...newConfigs[existingIndex], workType };
-          return newConfigs;
-        }
-        return [...prev, { toothNumber: selectedTooth, workType }];
-      });
       setDialogStep("implantType");
     } else {
-      setToothConfigs((prev) => {
-        const existingIndex = prev.findIndex(c => c.toothNumber === selectedTooth);
-        let newConfigs;
-        if (existingIndex >= 0) {
-          newConfigs = [...prev];
-          newConfigs[existingIndex] = { toothNumber: selectedTooth, workType };
-        } else {
-          newConfigs = [...prev, { toothNumber: selectedTooth, workType }];
-        }
-        onSelectionChange?.(newConfigs);
-        return newConfigs;
-      });
-      setSelectedTooth(null);
+      setDialogStep("material");
     }
   };
 
@@ -99,9 +96,22 @@ export function ToothSelection({ onSelectionChange }: ToothSelectionProps) {
     if (!selectedTooth) return;
 
     setToothConfigs((prev) => {
-      const newConfigs = prev.map((config) =>
+      return prev.map((config) =>
         config.toothNumber === selectedTooth
           ? { ...config, implantType }
+          : config
+      );
+    });
+    setDialogStep("material");
+  };
+
+  const handleMaterialSelect = (material: string) => {
+    if (!selectedTooth) return;
+
+    setToothConfigs((prev) => {
+      const newConfigs = prev.map((config) =>
+        config.toothNumber === selectedTooth
+          ? { ...config, material }
           : config
       );
       onSelectionChange?.(newConfigs);
@@ -137,6 +147,10 @@ export function ToothSelection({ onSelectionChange }: ToothSelectionProps) {
 
   const getImplantTypeLabel = (value: string) => {
     return implantTypes.find(t => t.value === value)?.label || value;
+  };
+
+  const getMaterialLabel = (value: string) => {
+    return materials.find(t => t.value === value)?.label || value;
   };
 
   const renderToothRow = (teeth: string[]) => (
@@ -210,6 +224,9 @@ export function ToothSelection({ onSelectionChange }: ToothSelectionProps) {
                       {config.implantType && (
                         <span className="opacity-80">({getImplantTypeLabel(config.implantType)})</span>
                       )}
+                      {config.material && (
+                        <span className="opacity-80">[{getMaterialLabel(config.material)}]</span>
+                      )}
                       <button
                         onClick={() => removeTooth(config.toothNumber)}
                         className="ml-1 hover:bg-white/20 rounded p-0.5"
@@ -230,18 +247,30 @@ export function ToothSelection({ onSelectionChange }: ToothSelectionProps) {
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              {dialogStep === "implantType" && (
+              {(dialogStep === "implantType" || dialogStep === "material") && (
                 <Button
                   variant="ghost"
                   size="sm"
                   className="p-1 h-auto"
-                  onClick={() => setDialogStep("workType")}
+                  onClick={() => {
+                    if (dialogStep === "material") {
+                      const config = getToothConfig(selectedTooth!);
+                      if (config?.workType === "sob_implante") {
+                        setDialogStep("implantType");
+                      } else {
+                        setDialogStep("workType");
+                      }
+                    } else {
+                      setDialogStep("workType");
+                    }
+                  }}
                 >
                   <ArrowLeft size={18} />
                 </Button>
               )}
               Dente {selectedTooth}
               {dialogStep === "implantType" && <span className="text-muted-foreground"> - Tipo de Implante</span>}
+              {dialogStep === "material" && <span className="text-muted-foreground"> - Material</span>}
             </DialogTitle>
           </DialogHeader>
 
@@ -274,7 +303,7 @@ export function ToothSelection({ onSelectionChange }: ToothSelectionProps) {
                 </div>
               )}
             </div>
-          ) : (
+          ) : dialogStep === "implantType" ? (
             <div className="space-y-4">
               <Label className="text-sm font-medium">Selecione o Tipo de Implante</Label>
               <div className="grid grid-cols-2 gap-3">
@@ -282,6 +311,21 @@ export function ToothSelection({ onSelectionChange }: ToothSelectionProps) {
                   <button
                     key={type.value}
                     onClick={() => handleImplantTypeSelect(type.value)}
+                    className={`p-4 rounded-lg text-white font-medium text-sm transition-all ${type.color}`}
+                  >
+                    {type.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <Label className="text-sm font-medium">Selecione o Material</Label>
+              <div className="grid grid-cols-2 gap-3">
+                {materials.map((type) => (
+                  <button
+                    key={type.value}
+                    onClick={() => handleMaterialSelect(type.value)}
                     className={`p-4 rounded-lg text-white font-medium text-sm transition-all ${type.color}`}
                   >
                     {type.label}

@@ -16,7 +16,7 @@ export default function Index() {
   const [toothConfigs, setToothConfigs] = useState<ToothConfig[]>([]);
   const [smilePhoto, setSmilePhoto] = useState<File | null>(null);
   const [scanFile, setScanFile] = useState<File | null>(null);
-  const [material, setMaterial] = useState<string>("");
+  
   
   const [color, setColor] = useState<string>("");
   const [deliveryDeadline, setDeliveryDeadline] = useState<string>("");
@@ -85,8 +85,8 @@ export default function Index() {
           selected_teeth: toothConfigs.map(c => c.toothNumber),
           smile_photo_url: smilePhotoUrl,
           scan_file_url: scanFileUrl,
-          additional_notes: data.additionalNotes + (toothConfigs.length > 0 ? `\n\n--- Configuração por Dente ---\n${toothConfigs.map(c => `Dente ${c.toothNumber}: ${c.workType}${c.implantType ? ` (${c.implantType})` : ''}`).join('\n')}` : ''),
-          material: material || null,
+          additional_notes: data.additionalNotes + (toothConfigs.length > 0 ? `\n\n--- Configuração por Dente ---\n${toothConfigs.map(c => `Dente ${c.toothNumber}: ${c.workType}${c.implantType ? ` (${c.implantType})` : ''}${c.material ? ` [${c.material}]` : ''}`).join('\n')}` : ''),
+          material: toothConfigs.length > 0 ? toothConfigs[0].material || null : null,
           prosthesis_type: null,
           color: color || null,
           delivery_deadline: deliveryDeadline || null,
@@ -105,7 +105,7 @@ export default function Index() {
       setToothConfigs([]);
       setSmilePhoto(null);
       setScanFile(null);
-      setMaterial("");
+      
       setColor("");
       setDeliveryDeadline("");
     } catch (error) {
@@ -311,10 +311,8 @@ export default function Index() {
 
             {/* Technical Configuration */}
             <ToothConfiguration 
-              material={material}
               color={color}
               deliveryDeadline={deliveryDeadline}
-              onMaterialChange={setMaterial}
               onColorChange={setColor}
               onDeliveryDeadlineChange={setDeliveryDeadline}
             />

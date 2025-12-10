@@ -5,19 +5,15 @@ import { Input } from "@/components/ui/input";
 import { Settings } from "lucide-react";
 
 interface ToothConfigurationProps {
-  material?: string;
   color?: string;
   deliveryDeadline?: string;
-  onMaterialChange?: (value: string) => void;
   onColorChange?: (value: string) => void;
   onDeliveryDeadlineChange?: (value: string) => void;
 }
 
 export function ToothConfiguration({
-  material,
   color,
   deliveryDeadline,
-  onMaterialChange,
   onColorChange,
   onDeliveryDeadlineChange
 }: ToothConfigurationProps) {
@@ -31,21 +27,6 @@ export function ToothConfiguration({
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="material">Material</Label>
-            <Select value={material} onValueChange={onMaterialChange}>
-              <SelectTrigger id="material">
-                <SelectValue placeholder="Selecione o material" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="dissilicato">Dissilicato</SelectItem>
-                <SelectItem value="zirconia">Zirconia</SelectItem>
-                <SelectItem value="pmma">PMMA</SelectItem>
-                <SelectItem value="resina">Resina</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
           <div className="space-y-2">
             <Label htmlFor="cor">Cor / Tonalidade</Label>
             <Input 
