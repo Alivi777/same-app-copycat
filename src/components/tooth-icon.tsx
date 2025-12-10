@@ -1,9 +1,10 @@
 import { cn } from "@/lib/utils";
+import { MouseEvent } from "react";
 
 interface ToothIconProps {
   selected?: boolean;
   disabled?: boolean;
-  onClick?: () => void;
+  onClick?: (e: MouseEvent<HTMLDivElement>) => void;
   className?: string;
   number?: string;
 }

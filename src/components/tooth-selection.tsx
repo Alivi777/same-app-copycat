@@ -53,6 +53,7 @@ export function ToothSelection({ onSelectionChange }: ToothSelectionProps) {
   const [toothConfigs, setToothConfigs] = useState<ToothConfig[]>([]);
   const [selectedTooth, setSelectedTooth] = useState<string | null>(null);
   const [dialogStep, setDialogStep] = useState<"workType" | "implantType" | "material">("workType");
+  const [lastConfiguredTooth, setLastConfiguredTooth] = useState<ToothConfig | null>(null);
 
   const upperRight = ["18", "17", "16", "15", "14", "13", "12", "11"];
   const upperLeft = ["21", "22", "23", "24", "25", "26", "27", "28"];
@@ -67,7 +68,33 @@ export function ToothSelection({ onSelectionChange }: ToothSelectionProps) {
     return toothConfigs.find(config => config.toothNumber === tooth);
   };
 
-  const handleToothClick = (tooth: string) => {
+  const handleToothClick = (tooth: string, ctrlKey: boolean) => {
+    // If Ctrl is pressed and we have a last configured tooth, copy the configuration
+    if (ctrlKey && lastConfiguredTooth && lastConfiguredTooth.material) {
+      const newConfig: ToothConfig = {
+        toothNumber: tooth,
+        workType: lastConfiguredTooth.workType,
+        implantType: lastConfiguredTooth.implantType,
+        material: lastConfiguredTooth.material,
+      };
+      
+      setToothConfigs((prev) => {
+        const existingIndex = prev.findIndex(c => c.toothNumber === tooth);
+        let newConfigs;
+        if (existingIndex >= 0) {
+          newConfigs = [...prev];
+          newConfigs[existingIndex] = newConfig;
+        } else {
+          newConfigs = [...prev, newConfig];
+        }
+        onSelectionChange?.(newConfigs);
+        return newConfigs;
+      });
+      
+      setLastConfiguredTooth(newConfig);
+      return;
+    }
+    
     setSelectedTooth(tooth);
     setDialogStep("workType");
   };
@@ -114,6 +141,13 @@ export function ToothSelection({ onSelectionChange }: ToothSelectionProps) {
           ? { ...config, material }
           : config
       );
+      
+      // Save the last configured tooth for Ctrl+Click copying
+      const configuredTooth = newConfigs.find(c => c.toothNumber === selectedTooth);
+      if (configuredTooth) {
+        setLastConfiguredTooth(configuredTooth);
+      }
+      
       onSelectionChange?.(newConfigs);
       return newConfigs;
     });
@@ -168,7 +202,7 @@ export function ToothSelection({ onSelectionChange }: ToothSelectionProps) {
           key={tooth}
           number={tooth}
           selected={isToothSelected(tooth)}
-          onClick={() => handleToothClick(tooth)}
+          onClick={(e) => handleToothClick(tooth, e.ctrlKey || e.metaKey)}
         />
       ))}
     </div>
