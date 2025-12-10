@@ -60,6 +60,11 @@ export function ToothSelection({ onSelectionChange }: ToothSelectionProps) {
   const lowerLeft = ["38", "37", "36", "35", "34", "33", "32", "31"];
   const lowerRight = ["41", "42", "43", "44", "45", "46", "47", "48"];
 
+  // Full dental arch order for range selection
+  const upperArch = [...upperRight, ...upperLeft];
+  const lowerArch = [...lowerLeft, ...lowerRight];
+  const allTeeth = [...upperArch, ...lowerArch];
+
   const isToothSelected = (tooth: string) => {
     return toothConfigs.some(config => config.toothNumber === tooth);
   };
@@ -68,7 +73,56 @@ export function ToothSelection({ onSelectionChange }: ToothSelectionProps) {
     return toothConfigs.find(config => config.toothNumber === tooth);
   };
 
-  const handleToothClick = (tooth: string, ctrlKey: boolean) => {
+  const getTeethInRange = (startTooth: string, endTooth: string): string[] => {
+    const startIndex = allTeeth.indexOf(startTooth);
+    const endIndex = allTeeth.indexOf(endTooth);
+    
+    if (startIndex === -1 || endIndex === -1) return [endTooth];
+    
+    const minIndex = Math.min(startIndex, endIndex);
+    const maxIndex = Math.max(startIndex, endIndex);
+    
+    return allTeeth.slice(minIndex, maxIndex + 1);
+  };
+
+  const handleToothClick = (tooth: string, ctrlKey: boolean, shiftKey: boolean) => {
+    // If Shift is pressed and we have a last configured tooth, copy to range
+    if (shiftKey && lastConfiguredTooth && lastConfiguredTooth.material) {
+      const teethInRange = getTeethInRange(lastConfiguredTooth.toothNumber, tooth);
+      
+      setToothConfigs((prev) => {
+        let newConfigs = [...prev];
+        
+        teethInRange.forEach((toothNum) => {
+          const newConfig: ToothConfig = {
+            toothNumber: toothNum,
+            workType: lastConfiguredTooth.workType,
+            implantType: lastConfiguredTooth.implantType,
+            material: lastConfiguredTooth.material,
+          };
+          
+          const existingIndex = newConfigs.findIndex(c => c.toothNumber === toothNum);
+          if (existingIndex >= 0) {
+            newConfigs[existingIndex] = newConfig;
+          } else {
+            newConfigs.push(newConfig);
+          }
+        });
+        
+        onSelectionChange?.(newConfigs);
+        return newConfigs;
+      });
+      
+      // Update last configured tooth to the end of range
+      setLastConfiguredTooth({
+        toothNumber: tooth,
+        workType: lastConfiguredTooth.workType,
+        implantType: lastConfiguredTooth.implantType,
+        material: lastConfiguredTooth.material,
+      });
+      return;
+    }
+    
     // If Ctrl is pressed and we have a last configured tooth, copy the configuration
     if (ctrlKey && lastConfiguredTooth && lastConfiguredTooth.material) {
       const newConfig: ToothConfig = {
@@ -202,7 +256,7 @@ export function ToothSelection({ onSelectionChange }: ToothSelectionProps) {
           key={tooth}
           number={tooth}
           selected={isToothSelected(tooth)}
-          onClick={(e) => handleToothClick(tooth, e.ctrlKey || e.metaKey)}
+          onClick={(e) => handleToothClick(tooth, e.ctrlKey || e.metaKey, e.shiftKey)}
         />
       ))}
     </div>
