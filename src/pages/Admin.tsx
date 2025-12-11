@@ -533,10 +533,15 @@ export default function Admin() {
               <img src="/header-logo-new.png" alt="Logo" className="w-8 h-8" />
               <h1 className="text-2xl font-bold text-gray-900">Painel Administrativo</h1>
             </div>
-            <Button variant="outline" onClick={handleLogout}>
-              <LogOut className="mr-2 w-4 h-4" />
-              Sair
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="default" onClick={() => navigate("/producao")}>
+                Visualização da Produção
+              </Button>
+              <Button variant="outline" onClick={handleLogout}>
+                <LogOut className="mr-2 w-4 h-4" />
+                Sair
+              </Button>
+            </div>
           </div>
         </div>
       </header>
