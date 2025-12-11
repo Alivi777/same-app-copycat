@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           additional_notes: string | null
           address: string | null
+          admin_notes: string | null
           assigned_to: string | null
           clinic_name: string | null
           color: string | null
@@ -42,6 +43,7 @@ export type Database = {
         Insert: {
           additional_notes?: string | null
           address?: string | null
+          admin_notes?: string | null
           assigned_to?: string | null
           clinic_name?: string | null
           color?: string | null
@@ -66,6 +68,7 @@ export type Database = {
         Update: {
           additional_notes?: string | null
           address?: string | null
+          admin_notes?: string | null
           assigned_to?: string | null
           clinic_name?: string | null
           color?: string | null
