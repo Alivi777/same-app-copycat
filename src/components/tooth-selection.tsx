@@ -46,7 +46,7 @@ const materials = [
   { value: "dissilicato", label: "Dissilicato", color: "bg-slate-600 hover:bg-slate-700" },
   { value: "zirconia", label: "Zirconia", color: "bg-stone-500 hover:bg-stone-600" },
   { value: "pmma", label: "PMMA", color: "bg-zinc-500 hover:bg-zinc-600" },
-  { value: "resina", label: "Resina", color: "bg-neutral-600 hover:bg-neutral-700" },
+  { value: "modelo_3d", label: "Modelo 3D", color: "bg-neutral-600 hover:bg-neutral-700" },
 ];
 
 export function ToothSelection({ onSelectionChange }: ToothSelectionProps) {
@@ -387,17 +387,21 @@ export function ToothSelection({ onSelectionChange }: ToothSelectionProps) {
                 ))}
               </div>
               
-              {currentToothConfig && (
-                <div className="pt-4 border-t">
-                  <Button
-                    variant="destructive"
-                    onClick={handleRemoveTooth}
-                    className="w-full"
-                  >
-                    Remover Dente
-                  </Button>
-                </div>
-              )}
+              <div className="pt-4 border-t flex gap-3">
+                <Button
+                  variant="outline"
+                  onClick={handleRemoveTooth}
+                  className="flex-1"
+                >
+                  Limpar
+                </Button>
+                <Button
+                  onClick={() => setSelectedTooth(null)}
+                  className="flex-1"
+                >
+                  Ok
+                </Button>
+              </div>
             </div>
           ) : dialogStep === "implantType" ? (
             <div className="space-y-4">
