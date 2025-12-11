@@ -59,6 +59,57 @@ const FileLink = ({ filePath }: { filePath: string }) => {
   );
 };
 
+const NotesDialog = ({ order, onSave }: { order: any; onSave: (orderId: string, notes: string) => Promise<void> }) => {
+  const [open, setOpen] = useState(false);
+  const [notes, setNotes] = useState(order.additional_notes || '');
+
+  const handleSave = async () => {
+    await onSave(order.id, notes);
+    setOpen(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      setOpen(isOpen);
+      if (isOpen) setNotes(order.additional_notes || '');
+    }}>
+      <DialogTrigger asChild>
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className={`${order.additional_notes ? 'text-blue-600 hover:text-blue-700 hover:bg-blue-50' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'}`}
+          title="Bloco de notas"
+        >
+          <StickyNote className="h-4 w-4" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <StickyNote className="h-5 w-5" />
+            Anotações - OS {order.order_number}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="text-sm text-muted-foreground">
+            Paciente: <span className="font-medium">{order.patient_name}</span>
+          </div>
+          <Textarea
+            placeholder="Escreva suas anotações sobre este trabalho..."
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            className="min-h-[200px]"
+          />
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+            <Button onClick={handleSave}>Salvar</Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 export default function Admin() {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -610,7 +661,7 @@ export default function Admin() {
                           value={order.material || ""}
                           onValueChange={(value) => handleMaterialChange(order.id, value)}
                         >
-                          <SelectTrigger className="w-[140px]">
+                          <SelectTrigger className="w-[115px]">
                             <SelectValue placeholder="Selecionar" />
                           </SelectTrigger>
                           <SelectContent>
@@ -854,41 +905,10 @@ export default function Admin() {
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
                           {/* Notes Dialog */}
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className={`${order.additional_notes ? 'text-blue-600 hover:text-blue-700 hover:bg-blue-50' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'}`}
-                                title="Bloco de notas"
-                              >
-                                <StickyNote className="h-4 w-4" />
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-lg">
-                              <DialogHeader>
-                                <DialogTitle className="flex items-center gap-2">
-                                  <StickyNote className="h-5 w-5" />
-                                  Anotações - OS {order.order_number}
-                                </DialogTitle>
-                              </DialogHeader>
-                              <div className="space-y-4">
-                                <div className="text-sm text-muted-foreground">
-                                  Paciente: <span className="font-medium">{order.patient_name}</span>
-                                </div>
-                                <Textarea
-                                  placeholder="Escreva suas anotações sobre este trabalho..."
-                                  defaultValue={order.additional_notes || ''}
-                                  className="min-h-[200px]"
-                                  onBlur={(e) => {
-                                    if (e.target.value !== (order.additional_notes || '')) {
-                                      handleNotesChange(order.id, e.target.value);
-                                    }
-                                  }}
-                                />
-                              </div>
-                            </DialogContent>
-                          </Dialog>
+                          <NotesDialog 
+                            order={order} 
+                            onSave={handleNotesChange}
+                          />
                           <Button 
                             variant="ghost" 
                             size="sm" 
