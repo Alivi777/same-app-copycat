@@ -432,6 +432,11 @@ export default function Admin() {
 
       if (error) throw error;
 
+      // Update local state immediately
+      setOrders(prev => prev.map(order => 
+        order.id === orderId ? { ...order, admin_notes: notes } : order
+      ));
+
       toast({
         title: "Anotações salvas",
         description: "As anotações foram salvas com sucesso.",
