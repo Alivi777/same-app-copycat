@@ -61,7 +61,7 @@ const FileLink = ({ filePath }: { filePath: string }) => {
 
 const NotesDialog = ({ order, onSave }: { order: any; onSave: (orderId: string, notes: string) => Promise<void> }) => {
   const [open, setOpen] = useState(false);
-  const [notes, setNotes] = useState(order.additional_notes || '');
+  const [notes, setNotes] = useState(order.admin_notes || '');
 
   const handleSave = async () => {
     await onSave(order.id, notes);
@@ -71,13 +71,13 @@ const NotesDialog = ({ order, onSave }: { order: any; onSave: (orderId: string, 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => {
       setOpen(isOpen);
-      if (isOpen) setNotes(order.additional_notes || '');
+      if (isOpen) setNotes(order.admin_notes || '');
     }}>
       <DialogTrigger asChild>
         <Button 
           variant="ghost" 
           size="sm" 
-          className={`${order.additional_notes ? 'text-blue-600 hover:text-blue-700 hover:bg-blue-50' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'}`}
+          className={`${order.admin_notes ? 'text-blue-600 hover:text-blue-700 hover:bg-blue-50' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'}`}
           title="Bloco de notas"
         >
           <StickyNote className="h-4 w-4" />
@@ -427,7 +427,7 @@ export default function Admin() {
     try {
       const { error } = await supabase
         .from('orders')
-        .update({ additional_notes: notes })
+        .update({ admin_notes: notes })
         .eq('id', orderId);
 
       if (error) throw error;
