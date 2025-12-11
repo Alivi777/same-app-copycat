@@ -4,7 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { ClipboardList, Search } from "lucide-react";
+import { ClipboardList, Search, FileText, Image } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -20,6 +22,14 @@ interface Order {
   material: string | null;
   color: string | null;
   created_at: string;
+  assigned_to: string | null;
+  smile_photo_url: string | null;
+  scan_file_url: string | null;
+}
+
+interface Profile {
+  user_id: string;
+  username: string;
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -50,8 +60,62 @@ const STATUS_COLORS: Record<string, string> = {
   pureto: "bg-amber-100 text-amber-800 border-amber-300",
 };
 
+const ImageWithSignedUrl = ({ filePath }: { filePath: string }) => {
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadImage = async () => {
+      const { data } = await supabase.storage
+        .from('order-files')
+        .createSignedUrl(filePath, 3600);
+      if (data) setImageUrl(data.signedUrl);
+    };
+    loadImage();
+  }, [filePath]);
+
+  return imageUrl ? (
+    <img src={imageUrl} alt="Arquivo" className="max-w-full h-auto rounded-lg" />
+  ) : (
+    <div className="text-muted-foreground">Carregando...</div>
+  );
+};
+
+const FileLink = ({ filePath }: { filePath: string }) => {
+  const [fileUrl, setFileUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadUrl = async () => {
+      const { data } = await supabase.storage
+        .from('order-files')
+        .createSignedUrl(filePath, 3600);
+      if (data) setFileUrl(data.signedUrl);
+    };
+    loadUrl();
+  }, [filePath]);
+
+  return fileUrl ? (
+    <Button asChild variant="outline" size="sm">
+      <a href={fileUrl} target="_blank" rel="noopener noreferrer">
+        Abrir
+      </a>
+    </Button>
+  ) : (
+    <div className="text-muted-foreground text-sm">Carregando...</div>
+  );
+};
+
+const getUserColor = (name: string) => {
+  switch(name.toLowerCase()) {
+    case 'alexandre': return 'bg-purple-600 text-white';
+    case 'carneiro': return 'bg-cyan-500 text-white';
+    case 'henrique': return 'bg-amber-800 text-white';
+    default: return 'bg-gray-600 text-white';
+  }
+};
+
 export function OrdersList() {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [users, setUsers] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -82,7 +146,7 @@ export function OrdersList() {
   const fetchOrders = async () => {
     const { data, error } = await supabase
       .from('orders')
-      .select('id, order_number, patient_name, dentist_name, clinic_name, status, date, delivery_deadline, material, color, created_at')
+      .select('id, order_number, patient_name, dentist_name, clinic_name, status, date, delivery_deadline, material, color, created_at, assigned_to, smile_photo_url, scan_file_url')
       .order('created_at', { ascending: false });
 
     if (!error && data) {
@@ -90,6 +154,17 @@ export function OrdersList() {
     }
     setLoading(false);
   };
+
+  const fetchUsers = async () => {
+    const { data } = await supabase
+      .from('profiles')
+      .select('user_id, username');
+    if (data) setUsers(data);
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
   const filteredOrders = orders.filter(order => 
     order.patient_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -148,10 +223,10 @@ export function OrdersList() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Nº Pedido</TableHead>
+                    <TableHead>Atribuído a</TableHead>
                     <TableHead>Paciente</TableHead>
                     <TableHead>Dentista</TableHead>
-                    <TableHead>Clínica</TableHead>
+                    <TableHead>Arquivos</TableHead>
                     <TableHead>Data</TableHead>
                     <TableHead>Prazo</TableHead>
                     <TableHead>Material</TableHead>
@@ -162,10 +237,55 @@ export function OrdersList() {
                 <TableBody>
                   {filteredOrders.map((order) => (
                     <TableRow key={order.id}>
-                      <TableCell className="font-medium">{order.order_number}</TableCell>
+                      <TableCell>
+                        {order.assigned_to ? (() => {
+                          const username = users.find(u => u.user_id === order.assigned_to)?.username || 'Usuário';
+                          return (
+                            <span className={`px-3 py-1 rounded ${getUserColor(username)} font-medium`}>
+                              {username}
+                            </span>
+                          );
+                        })() : '-'}
+                      </TableCell>
                       <TableCell>{order.patient_name}</TableCell>
                       <TableCell>{order.dentist_name || "-"}</TableCell>
-                      <TableCell>{order.clinic_name || "-"}</TableCell>
+                      <TableCell>
+                        {(order.smile_photo_url || order.scan_file_url) ? (
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button variant="outline" size="sm">
+                                <FileText className="mr-1 h-4 w-4" />
+                                Ver
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-2xl">
+                              <DialogHeader>
+                                <DialogTitle>Arquivos - OS {order.order_number}</DialogTitle>
+                              </DialogHeader>
+                              <div className="space-y-4">
+                                {order.smile_photo_url && (
+                                  <div>
+                                    <h4 className="font-medium mb-2 flex items-center gap-2">
+                                      <Image className="h-4 w-4" />
+                                      Foto do Sorriso
+                                    </h4>
+                                    <ImageWithSignedUrl filePath={order.smile_photo_url} />
+                                  </div>
+                                )}
+                                {order.scan_file_url && (
+                                  <div>
+                                    <h4 className="font-medium mb-2 flex items-center gap-2">
+                                      <FileText className="h-4 w-4" />
+                                      Arquivo de Scan
+                                    </h4>
+                                    <FileLink filePath={order.scan_file_url} />
+                                  </div>
+                                )}
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+                        ) : '-'}
+                      </TableCell>
                       <TableCell>{formatDate(order.date)}</TableCell>
                       <TableCell>{formatDate(order.delivery_deadline)}</TableCell>
                       <TableCell>{order.material || "-"}</TableCell>
