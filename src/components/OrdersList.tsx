@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { ClipboardList, Search, FileText, Image } from "lucide-react";
+import { ClipboardList, Search, FileText, Image, Eye } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
@@ -14,13 +14,20 @@ interface Order {
   id: string;
   order_number: string;
   patient_name: string;
+  patient_id: string | null;
   dentist_name: string | null;
   clinic_name: string | null;
+  email: string | null;
+  phone: string | null;
+  address: string | null;
   status: string;
   date: string | null;
   delivery_deadline: string | null;
   material: string | null;
   color: string | null;
+  prosthesis_type: string | null;
+  selected_teeth: string[] | null;
+  additional_notes: string | null;
   created_at: string;
   assigned_to: string | null;
   smile_photo_url: string | null;
@@ -146,7 +153,7 @@ export function OrdersList() {
   const fetchOrders = async () => {
     const { data, error } = await supabase
       .from('orders')
-      .select('id, order_number, patient_name, dentist_name, clinic_name, status, date, delivery_deadline, material, color, created_at, assigned_to, smile_photo_url, scan_file_url')
+      .select('*')
       .order('created_at', { ascending: false });
 
     if (!error && data) {
@@ -226,7 +233,7 @@ export function OrdersList() {
                     <TableHead>Atribuído a</TableHead>
                     <TableHead>Paciente</TableHead>
                     <TableHead>Dentista</TableHead>
-                    <TableHead>Arquivos</TableHead>
+                    <TableHead>Pedido</TableHead>
                     <TableHead>Data</TableHead>
                     <TableHead>Prazo</TableHead>
                     <TableHead>Material</TableHead>
@@ -250,41 +257,152 @@ export function OrdersList() {
                       <TableCell>{order.patient_name}</TableCell>
                       <TableCell>{order.dentist_name || "-"}</TableCell>
                       <TableCell>
-                        {(order.smile_photo_url || order.scan_file_url) ? (
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button variant="outline" size="sm">
-                                <FileText className="mr-1 h-4 w-4" />
-                                Ver
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-2xl">
-                              <DialogHeader>
-                                <DialogTitle>Arquivos - OS {order.order_number}</DialogTitle>
-                              </DialogHeader>
-                              <div className="space-y-4">
-                                {order.smile_photo_url && (
-                                  <div>
-                                    <h4 className="font-medium mb-2 flex items-center gap-2">
-                                      <Image className="h-4 w-4" />
-                                      Foto do Sorriso
-                                    </h4>
-                                    <ImageWithSignedUrl filePath={order.smile_photo_url} />
-                                  </div>
-                                )}
-                                {order.scan_file_url && (
-                                  <div>
-                                    <h4 className="font-medium mb-2 flex items-center gap-2">
-                                      <FileText className="h-4 w-4" />
-                                      Arquivo de Scan
-                                    </h4>
-                                    <FileLink filePath={order.scan_file_url} />
-                                  </div>
-                                )}
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" size="sm">
+                              <Eye className="mr-1 h-4 w-4" />
+                              Ver
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+                            <DialogHeader>
+                              <DialogTitle>Detalhes - OS {order.order_number}</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-6">
+                              {/* Informações da Clínica */}
+                              <div>
+                                <h3 className="font-semibold mb-3 text-lg">Informações da Clínica</h3>
+                                <div className="bg-muted p-4 rounded-lg space-y-2">
+                                  {order.clinic_name && (
+                                    <div className="flex gap-2">
+                                      <span className="font-medium">Clínica:</span>
+                                      <span>{order.clinic_name}</span>
+                                    </div>
+                                  )}
+                                  {order.email && (
+                                    <div className="flex gap-2">
+                                      <span className="font-medium">Email:</span>
+                                      <span>{order.email}</span>
+                                    </div>
+                                  )}
+                                  {order.phone && (
+                                    <div className="flex gap-2">
+                                      <span className="font-medium">Telefone:</span>
+                                      <span>{order.phone}</span>
+                                    </div>
+                                  )}
+                                  {order.address && (
+                                    <div className="flex gap-2">
+                                      <span className="font-medium">Endereço:</span>
+                                      <span>{order.address}</span>
+                                    </div>
+                                  )}
+                                  {!order.clinic_name && !order.email && !order.phone && !order.address && (
+                                    <span className="text-muted-foreground">Nenhuma informação da clínica</span>
+                                  )}
+                                </div>
                               </div>
-                            </DialogContent>
-                          </Dialog>
-                        ) : '-'}
+
+                              {/* Informações do Pedido */}
+                              <div>
+                                <h3 className="font-semibold mb-3 text-lg">Informações do Pedido</h3>
+                                <div className="bg-muted p-4 rounded-lg space-y-2">
+                                  <div className="flex gap-2">
+                                    <span className="font-medium">Paciente:</span>
+                                    <span>{order.patient_name}</span>
+                                  </div>
+                                  {order.patient_id && (
+                                    <div className="flex gap-2">
+                                      <span className="font-medium">ID do Paciente:</span>
+                                      <span>{order.patient_id}</span>
+                                    </div>
+                                  )}
+                                  <div className="flex gap-2">
+                                    <span className="font-medium">Dentista:</span>
+                                    <span>{order.dentist_name || '-'}</span>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <span className="font-medium">Data:</span>
+                                    <span>{formatDate(order.date)}</span>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <span className="font-medium">Dentes:</span>
+                                    <span>{order.selected_teeth?.join(', ') || '-'}</span>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <span className="font-medium">Status:</span>
+                                    <Badge 
+                                      variant="outline" 
+                                      className={STATUS_COLORS[order.status] || "bg-gray-100 text-gray-800"}
+                                    >
+                                      {STATUS_LABELS[order.status] || order.status}
+                                    </Badge>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Configurações Técnicas */}
+                              <div>
+                                <h3 className="font-semibold mb-3 text-lg">Configurações Técnicas</h3>
+                                <div className="bg-muted p-4 rounded-lg space-y-2">
+                                  <div className="flex gap-2">
+                                    <span className="font-medium">Material:</span>
+                                    <span>{order.material || '-'}</span>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <span className="font-medium">Tipo de Prótese:</span>
+                                    <span>{order.prosthesis_type || '-'}</span>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <span className="font-medium">Cor / Tonalidade:</span>
+                                    <span>{order.color || '-'}</span>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <span className="font-medium">Prazo de Entrega:</span>
+                                    <span>{formatDate(order.delivery_deadline)}</span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Arquivos */}
+                              {(order.smile_photo_url || order.scan_file_url) && (
+                                <div>
+                                  <h3 className="font-semibold mb-3 text-lg">Arquivos</h3>
+                                  <div className="space-y-4">
+                                    {order.smile_photo_url && (
+                                      <div>
+                                        <h4 className="font-medium mb-2 flex items-center gap-2">
+                                          <Image className="h-4 w-4" />
+                                          Foto do Sorriso
+                                        </h4>
+                                        <ImageWithSignedUrl filePath={order.smile_photo_url} />
+                                      </div>
+                                    )}
+                                    {order.scan_file_url && (
+                                      <div>
+                                        <h4 className="font-medium mb-2 flex items-center gap-2">
+                                          <FileText className="h-4 w-4" />
+                                          Arquivo de Scan
+                                        </h4>
+                                        <FileLink filePath={order.scan_file_url} />
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Observações */}
+                              {order.additional_notes && (
+                                <div>
+                                  <h3 className="font-semibold mb-3 text-lg">Observações da Clínica</h3>
+                                  <div className="bg-muted p-4 rounded-lg">
+                                    <p className="text-sm whitespace-pre-wrap">{order.additional_notes}</p>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </DialogContent>
+                        </Dialog>
                       </TableCell>
                       <TableCell>{formatDate(order.date)}</TableCell>
                       <TableCell>{formatDate(order.delivery_deadline)}</TableCell>
