@@ -6,10 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ToothSelection, ToothConfig } from "@/components/tooth-selection";
 import { ToothConfiguration } from "@/components/tooth-configuration";
-import { User, FileText, Upload, Phone, Mail, MapPin, Calendar } from "lucide-react";
+import { User, FileText, Upload, Phone, Mail, MapPin, Calendar, ClipboardList, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
+import { OrdersList } from "@/components/OrdersList";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Index() {
   const { toast } = useToast();
@@ -148,250 +150,269 @@ export default function Index() {
       </header>
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Form Title */}
-        <div className="mb-8 text-center">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">Ordem de Serviço Odontológica</h2>
-          <p className="text-gray-600">Preencha os dados do paciente e especificações técnicas</p>
-        </div>
+        <Tabs defaultValue="novo-pedido" className="w-full">
+          <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-8">
+            <TabsTrigger value="novo-pedido" className="flex items-center gap-2">
+              <Plus className="w-4 h-4" />
+              Novo Pedido
+            </TabsTrigger>
+            <TabsTrigger value="lista-pedidos" className="flex items-center gap-2">
+              <ClipboardList className="w-4 h-4" />
+              Ver Pedidos
+            </TabsTrigger>
+          </TabsList>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            {/* Patient Information Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-3">
-                  <User className="text-burgundy-500" size={20} />
-                  Informações do Paciente
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="patientName"
-                    render={({ field }) => (
-                      <FormItem className="md:col-span-2">
-                        <FormLabel>Nome do Paciente</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Nome completo do paciente" {...field} required />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="patientId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Id do Paciente</FormLabel>
-                        <FormControl>
-                          <Input placeholder="ID" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="date"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>
-                          <Calendar className="inline w-4 h-4 mr-2" />
-                          Data da Solicitação
-                        </FormLabel>
-                        <FormControl>
-                          <Input type="date" {...field} required />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Dentist Information Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-3">
-                  <FileText className="text-burgundy-500" size={20} />
-                  Informações do Dentista
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="dentistName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Nome do Dentista</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Nome do profissional" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="clinicName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Nome da Clínica</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Nome da clínica odontológica" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="phone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>
-                          <Phone className="inline w-4 h-4 mr-2" />
-                          Telefone
-                        </FormLabel>
-                        <FormControl>
-                          <Input placeholder="(00) 00000-0000" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>
-                          <Mail className="inline w-4 h-4 mr-2" />
-                          E-mail
-                        </FormLabel>
-                        <FormControl>
-                          <Input type="email" placeholder="email@exemplo.com" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="address"
-                    render={({ field }) => (
-                      <FormItem className="md:col-span-2">
-                        <FormLabel>
-                          <MapPin className="inline w-4 h-4 mr-2" />
-                          Endereço
-                        </FormLabel>
-                        <FormControl>
-                          <Input placeholder="Endereço completo da clínica" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Tooth Selection */}
-            <ToothSelection onSelectionChange={setToothConfigs} />
-
-            {/* Technical Configuration */}
-            <ToothConfiguration 
-              color={color}
-              deliveryDeadline={deliveryDeadline}
-              onColorChange={setColor}
-              onDeliveryDeadlineChange={setDeliveryDeadline}
-            />
-
-            {/* File Upload Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-3">
-                  <Upload className="text-burgundy-500" size={20} />
-                  Arquivos e Documentos
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Foto do Sorriso</label>
-                    <Input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleSmilePhotoChange}
-                      className="cursor-pointer"
-                    />
-                    {smilePhoto && (
-                      <p className="text-sm text-green-600">✓ {smilePhoto.name}</p>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Arquivo do Escaneamento</label>
-                    <Input
-                      type="file"
-                      onChange={handleScanFileChange}
-                      className="cursor-pointer"
-                    />
-                    {scanFile && (
-                      <p className="text-sm text-green-600">✓ {scanFile.name}</p>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Additional Notes */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Observações Adicionais</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <FormField
-                  control={form.control}
-                  name="additionalNotes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Informações complementares sobre o caso..."
-                          rows={4}
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-            </Card>
-
-            {/* Submit Button */}
-            <div className="flex justify-center">
-              <Button
-                type="submit"
-                size="lg"
-                className="w-full md:w-auto bg-burgundy-500 hover:bg-burgundy-600 text-white px-12"
-              >
-                Enviar Ordem de Serviço
-              </Button>
+          <TabsContent value="novo-pedido">
+            {/* Form Title */}
+            <div className="mb-8 text-center">
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">Ordem de Serviço Odontológica</h2>
+              <p className="text-gray-600">Preencha os dados do paciente e especificações técnicas</p>
             </div>
-          </form>
-        </Form>
+
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                {/* Patient Information Section */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-3">
+                      <User className="text-burgundy-500" size={20} />
+                      Informações do Paciente
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="patientName"
+                        render={({ field }) => (
+                          <FormItem className="md:col-span-2">
+                            <FormLabel>Nome do Paciente</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Nome completo do paciente" {...field} required />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="patientId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Id do Paciente</FormLabel>
+                            <FormControl>
+                              <Input placeholder="ID" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="date"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>
+                              <Calendar className="inline w-4 h-4 mr-2" />
+                              Data da Solicitação
+                            </FormLabel>
+                            <FormControl>
+                              <Input type="date" {...field} required />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Dentist Information Section */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-3">
+                      <FileText className="text-burgundy-500" size={20} />
+                      Informações do Dentista
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="dentistName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Nome do Dentista</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Nome do profissional" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="clinicName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Nome da Clínica</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Nome da clínica odontológica" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="phone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>
+                              <Phone className="inline w-4 h-4 mr-2" />
+                              Telefone
+                            </FormLabel>
+                            <FormControl>
+                              <Input placeholder="(00) 00000-0000" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>
+                              <Mail className="inline w-4 h-4 mr-2" />
+                              E-mail
+                            </FormLabel>
+                            <FormControl>
+                              <Input type="email" placeholder="email@exemplo.com" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="address"
+                        render={({ field }) => (
+                          <FormItem className="md:col-span-2">
+                            <FormLabel>
+                              <MapPin className="inline w-4 h-4 mr-2" />
+                              Endereço
+                            </FormLabel>
+                            <FormControl>
+                              <Input placeholder="Endereço completo da clínica" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Tooth Selection */}
+                <ToothSelection onSelectionChange={setToothConfigs} />
+
+                {/* Technical Configuration */}
+                <ToothConfiguration 
+                  color={color}
+                  deliveryDeadline={deliveryDeadline}
+                  onColorChange={setColor}
+                  onDeliveryDeadlineChange={setDeliveryDeadline}
+                />
+
+                {/* File Upload Section */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-3">
+                      <Upload className="text-burgundy-500" size={20} />
+                      Arquivos e Documentos
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Foto do Sorriso</label>
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleSmilePhotoChange}
+                          className="cursor-pointer"
+                        />
+                        {smilePhoto && (
+                          <p className="text-sm text-green-600">✓ {smilePhoto.name}</p>
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Arquivo do Escaneamento</label>
+                        <Input
+                          type="file"
+                          onChange={handleScanFileChange}
+                          className="cursor-pointer"
+                        />
+                        {scanFile && (
+                          <p className="text-sm text-green-600">✓ {scanFile.name}</p>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Additional Notes */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Observações Adicionais</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <FormField
+                      control={form.control}
+                      name="additionalNotes"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Informações complementares sobre o caso..."
+                              rows={4}
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </CardContent>
+                </Card>
+
+                {/* Submit Button */}
+                <div className="flex justify-center">
+                  <Button
+                    type="submit"
+                    size="lg"
+                    className="w-full md:w-auto bg-burgundy-500 hover:bg-burgundy-600 text-white px-12"
+                  >
+                    Enviar Ordem de Serviço
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </TabsContent>
+
+          <TabsContent value="lista-pedidos">
+            <OrdersList />
+          </TabsContent>
+        </Tabs>
       </main>
 
       {/* Footer */}
