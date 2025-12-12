@@ -40,6 +40,7 @@ const implantTypes = [
   { value: "mini_pilar", label: "Mini-Pilar", color: "bg-rose-600 hover:bg-rose-700" },
   { value: "munhao_universal_3.3x6", label: "Munhão Universal (3.3x6)", color: "bg-violet-600 hover:bg-violet-700" },
   { value: "munhao_universal_4.5x6", label: "Munhão Universal (4.5x6)", color: "bg-fuchsia-600 hover:bg-fuchsia-700" },
+  { value: "pilar_cm_ws", label: "PILAR CM_WS", color: "bg-teal-600 hover:bg-teal-700" },
 ];
 
 const materials = [
