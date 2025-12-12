@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ToothSelection, ToothConfig } from "@/components/tooth-selection";
 import { ToothConfiguration } from "@/components/tooth-configuration";
-import { User, FileText, Upload, Phone, Mail, MapPin, Calendar, ClipboardList, Plus } from "lucide-react";
+import { User, FileText, Upload, Phone, Mail, MapPin, Calendar, ClipboardList, Plus, Loader2 } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,9 +20,11 @@ export default function Index() {
   const [smilePhoto, setSmilePhoto] = useState<File | null>(null);
   const [scanFile, setScanFile] = useState<File | null>(null);
   
-  
   const [color, setColor] = useState<string>("");
   const [deliveryDeadline, setDeliveryDeadline] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadMessage, setUploadMessage] = useState("");
 
   const form = useForm({
     defaultValues: {
@@ -38,40 +41,60 @@ export default function Index() {
   });
 
   const onSubmit = async (data: any) => {
+    setIsSubmitting(true);
+    setUploadProgress(0);
+    setUploadMessage("Preparando envio...");
+    
     try {
-      // Generate order number
       const orderNumber = `OS-${Date.now()}`;
       
-      let smilePhotoUrl = null;
-      let scanFileUrl = null;
+      setUploadProgress(10);
+      setUploadMessage("Enviando arquivos...");
 
-      // Upload smile photo if exists
+      // Parallel uploads for better performance
+      const uploadPromises: Promise<{ type: string; path: string | null }>[] = [];
+      const totalFiles = (smilePhoto ? 1 : 0) + (scanFile ? 1 : 0);
+      let uploadedFiles = 0;
+
       if (smilePhoto) {
         const fileExt = smilePhoto.name.split('.').pop();
         const filePath = `${orderNumber}/smile.${fileExt}`;
-        const { error: uploadError } = await supabase.storage
-          .from('order-files')
-          .upload(filePath, smilePhoto);
-        
-        if (!uploadError) {
-          smilePhotoUrl = filePath;
-        }
+        uploadPromises.push(
+          supabase.storage
+            .from('order-files')
+            .upload(filePath, smilePhoto)
+            .then(({ error }) => {
+              uploadedFiles++;
+              setUploadProgress(10 + (uploadedFiles / totalFiles) * 50);
+              setUploadMessage(`Arquivo ${uploadedFiles} de ${totalFiles} enviado`);
+              return { type: 'smile', path: error ? null : filePath };
+            })
+        );
       }
 
-      // Upload scan file if exists
       if (scanFile) {
         const fileExt = scanFile.name.split('.').pop();
         const filePath = `${orderNumber}/scan.${fileExt}`;
-        const { error: uploadError } = await supabase.storage
-          .from('order-files')
-          .upload(filePath, scanFile);
-        
-        if (!uploadError) {
-          scanFileUrl = filePath;
-        }
+        uploadPromises.push(
+          supabase.storage
+            .from('order-files')
+            .upload(filePath, scanFile)
+            .then(({ error }) => {
+              uploadedFiles++;
+              setUploadProgress(10 + (uploadedFiles / totalFiles) * 50);
+              setUploadMessage(`Arquivo ${uploadedFiles} de ${totalFiles} enviado`);
+              return { type: 'scan', path: error ? null : filePath };
+            })
+        );
       }
 
-      // Save order to database
+      const uploadResults = await Promise.all(uploadPromises);
+      const smilePhotoUrl = uploadResults.find(r => r.type === 'smile')?.path || null;
+      const scanFileUrl = uploadResults.find(r => r.type === 'scan')?.path || null;
+
+      setUploadProgress(70);
+      setUploadMessage("Salvando pedido...");
+
       const { error: insertError } = await supabase
         .from('orders')
         .insert({
@@ -97,6 +120,9 @@ export default function Index() {
 
       if (insertError) throw insertError;
 
+      setUploadProgress(100);
+      setUploadMessage("Pedido enviado com sucesso!");
+
       toast({
         title: "Ordem de Serviço Enviada",
         description: "A ordem de serviço foi registrada com sucesso!",
@@ -107,7 +133,6 @@ export default function Index() {
       setToothConfigs([]);
       setSmilePhoto(null);
       setScanFile(null);
-      
       setColor("");
       setDeliveryDeadline("");
     } catch (error) {
@@ -117,6 +142,10 @@ export default function Index() {
         description: "Ocorreu um erro ao enviar a ordem de serviço. Tente novamente.",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
+      setUploadProgress(0);
+      setUploadMessage("");
     }
   };
 
@@ -396,13 +425,29 @@ export default function Index() {
                 </Card>
 
                 {/* Submit Button */}
-                <div className="flex justify-center">
+                <div className="flex flex-col items-center gap-4">
+                  {isSubmitting && (
+                    <div className="w-full max-w-md space-y-2">
+                      <Progress value={uploadProgress} className="h-2" />
+                      <p className="text-sm text-center text-muted-foreground">
+                        {uploadMessage}
+                      </p>
+                    </div>
+                  )}
                   <Button
                     type="submit"
                     size="lg"
                     className="w-full md:w-auto bg-burgundy-500 hover:bg-burgundy-600 text-white px-12"
+                    disabled={isSubmitting}
                   >
-                    Enviar Ordem de Serviço
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Enviando...
+                      </>
+                    ) : (
+                      "Enviar Ordem de Serviço"
+                    )}
                   </Button>
                 </div>
               </form>
