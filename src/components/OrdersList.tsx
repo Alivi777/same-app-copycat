@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { ClipboardList, Search, FileText, Image, Eye } from "lucide-react";
+import { ClipboardList, Search, FileText, Image, Eye, RefreshCw } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
@@ -209,8 +209,8 @@ export function OrdersList() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="mb-4">
-            <div className="relative max-w-md">
+          <div className="mb-4 flex items-center gap-3">
+            <div className="relative max-w-md flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Buscar por paciente, pedido, dentista ou clínica..."
@@ -219,6 +219,17 @@ export function OrdersList() {
                 className="pl-10"
               />
             </div>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => {
+                setLoading(true);
+                fetchOrders();
+              }}
+              title="Atualizar lista"
+            >
+              <RefreshCw className="h-4 w-4" />
+            </Button>
           </div>
 
           {filteredOrders.length === 0 ? (
