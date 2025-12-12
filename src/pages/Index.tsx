@@ -41,6 +41,25 @@ export default function Index() {
   });
 
   const onSubmit = async (data: any) => {
+    // Validation for required fields
+    if (toothConfigs.length === 0) {
+      toast({
+        title: "Seleção de Dentes Obrigatória",
+        description: "Por favor, selecione pelo menos um dente antes de enviar.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!color) {
+      toast({
+        title: "Cor Obrigatória",
+        description: "Por favor, selecione uma cor antes de enviar.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     setUploadProgress(0);
     setUploadMessage("Preparando envio...");
