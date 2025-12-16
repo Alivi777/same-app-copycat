@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { FileText, LogOut, Eye, Filter, CheckCircle, RefreshCw, StickyNote } from "lucide-react";
+import { FileText, LogOut, Eye, Filter, CheckCircle, RefreshCw, StickyNote, Undo2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -395,6 +395,34 @@ export default function Admin() {
       toast({
         title: "Erro ao aceitar",
         description: "Não foi possível aceitar a ordem.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleUnacceptOrder = async (orderId: string) => {
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ 
+          assigned_to: null,
+          status: 'pending'
+        })
+        .eq('id', orderId);
+
+      if (error) throw error;
+
+      fetchOrders();
+
+      toast({
+        title: "Aceitação desfeita",
+        description: "A ordem voltou para pendente e pode ser aceita por outra pessoa.",
+      });
+    } catch (error) {
+      console.error('Error unaccepting order:', error);
+      toast({
+        title: "Erro ao desfazer",
+        description: "Não foi possível desfazer a aceitação.",
         variant: "destructive",
       });
     }
@@ -893,19 +921,31 @@ export default function Admin() {
                                    </div>
                                  )}
 
-                                 {/* Botão Aceitar */}
-                                 <div className="flex justify-end pt-4 border-t">
+                                 {/* Botão Aceitar / Desfazer */}
+                                 <div className="flex justify-between items-center pt-4 border-t">
                                    {order.assigned_to ? (
-                                     <div className="text-sm text-muted-foreground">
-                                       Atribuído a: <span className="font-medium">{order.assigned_user?.username || 'Usuário'}</span>
-                                     </div>
+                                     <>
+                                       <div className="text-sm text-muted-foreground">
+                                         Atribuído a: <span className="font-medium">{order.assigned_user?.username || 'Usuário'}</span>
+                                       </div>
+                                       <Button 
+                                         onClick={() => handleUnacceptOrder(order.id)}
+                                         variant="outline"
+                                         className="text-orange-600 border-orange-600 hover:bg-orange-50"
+                                       >
+                                         <Undo2 className="mr-2 h-4 w-4" />
+                                         Desfazer Aceitação
+                                       </Button>
+                                     </>
                                    ) : (
-                                     <Button 
-                                       onClick={() => handleAcceptOrder(order.id)}
-                                       className="bg-success text-success-foreground hover:bg-success/90"
-                                     >
-                                       Aceitar Ordem
-                                     </Button>
+                                     <div className="ml-auto">
+                                       <Button 
+                                         onClick={() => handleAcceptOrder(order.id)}
+                                         className="bg-success text-success-foreground hover:bg-success/90"
+                                       >
+                                         Aceitar Ordem
+                                       </Button>
+                                     </div>
                                    )}
                                  </div>
                                </div>
