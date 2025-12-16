@@ -70,7 +70,7 @@ const OrderChip = ({ order, index }: OrderChipProps) => {
   
   return (
     <div 
-      className={`w-7 h-7 rounded-full ${colorClass} flex items-center justify-center text-white text-xs font-bold shadow-md cursor-pointer hover:scale-110 transition-transform border-2 border-white`}
+      className={`w-6 h-6 rounded-full ${colorClass} flex items-center justify-center text-white text-[10px] font-bold shadow-sm cursor-pointer hover:scale-110 transition-transform border border-white`}
       title={`#${index + 1} - ${order.patient_name}\nOS: ${order.order_number}\nResponsável: ${username || 'Não atribuído'}`}
     >
       {index + 1}
@@ -213,48 +213,48 @@ export default function Production() {
   }
 
   return (
-    <div className="min-h-screen bg-white p-6">
+    <div className="h-screen bg-white p-3 flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-2 flex-shrink-0">
         <Button variant="ghost" size="sm" onClick={() => navigate("/admin")} className="text-gray-600 hover:bg-gray-100">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Voltar ao Painel
         </Button>
       </div>
 
-      <div className="flex gap-8">
+      <div className="flex gap-4 flex-1 min-h-0">
         {/* Left Side - User Legend + Orders List */}
-        <div className="w-52 flex-shrink-0 space-y-6">
+        <div className="w-44 flex-shrink-0 space-y-3 flex flex-col">
           {/* User Legend */}
-          <div className="space-y-3">
+          <div className="space-y-1.5 flex-shrink-0">
             <div className="flex items-center gap-2">
-              <svg className="w-6 h-6 text-blue-600" viewBox="0 0 24 24" fill="currentColor">
+              <svg className="w-5 h-5 text-blue-600" viewBox="0 0 24 24" fill="currentColor">
                 <circle cx="12" cy="8" r="4"/>
                 <path d="M12 14c-6 0-8 3-8 6v2h16v-2c0-3-2-6-8-6z"/>
               </svg>
-              <span className="font-medium text-gray-800">CARNEIRO</span>
+              <span className="font-medium text-gray-800 text-sm">CARNEIRO</span>
             </div>
             <div className="flex items-center gap-2">
-              <svg className="w-6 h-6 text-purple-600" viewBox="0 0 24 24" fill="currentColor">
+              <svg className="w-5 h-5 text-purple-600" viewBox="0 0 24 24" fill="currentColor">
                 <circle cx="12" cy="8" r="4"/>
                 <path d="M12 14c-6 0-8 3-8 6v2h16v-2c0-3-2-6-8-6z"/>
               </svg>
-              <span className="font-medium text-gray-800">ALEXANDRE</span>
+              <span className="font-medium text-gray-800 text-sm">ALEXANDRE</span>
             </div>
             <div className="flex items-center gap-2">
-              <svg className="w-6 h-6 text-amber-700" viewBox="0 0 24 24" fill="currentColor">
+              <svg className="w-5 h-5 text-amber-700" viewBox="0 0 24 24" fill="currentColor">
                 <circle cx="12" cy="8" r="4"/>
                 <path d="M12 14c-6 0-8 3-8 6v2h16v-2c0-3-2-6-8-6z"/>
               </svg>
-              <span className="font-medium text-gray-800">HENRIQUE</span>
+              <span className="font-medium text-gray-800 text-sm">HENRIQUE</span>
             </div>
           </div>
 
           {/* Orders List */}
-          <div className="border-2 border-gray-800 p-3">
-            <h3 className="font-bold text-gray-800 mb-2">LISTA DE PEDIDOS</h3>
-            <ScrollArea className="h-[300px]">
-              <div className="space-y-1 text-sm">
+          <div className="border-2 border-gray-800 p-2 flex-1 min-h-0 flex flex-col">
+            <h3 className="font-bold text-gray-800 mb-1 text-sm flex-shrink-0">LISTA DE PEDIDOS</h3>
+            <ScrollArea className="flex-1">
+              <div className="space-y-0.5 text-xs">
                 {activeOrders.map(({ order, index }) => (
                   <div key={order.id} className="text-gray-700">
                     {index + 1}. {order.patient_name}
@@ -275,21 +275,21 @@ export default function Production() {
         </div>
 
         {/* Main Floor Plan */}
-        <div className="flex-1">
-          <div className="border-2 border-gray-800 relative" style={{ aspectRatio: '1.4/1' }}>
+        <div className="flex-1 min-h-0">
+          <div className="border-2 border-gray-800 relative h-full">
             {/* Top Section - Area de Projeto */}
-            <div className="absolute top-0 left-0 right-[280px] h-[35%] border-b-2 border-r-2 border-gray-800">
-              <div className="text-xs font-bold text-gray-800 text-center pt-1">ÁREA DE PROJETO</div>
+            <div className="absolute top-0 left-0 right-[220px] h-[35%] border-b-2 border-r-2 border-gray-800">
+              <div className="text-[10px] font-bold text-gray-800 text-center pt-0.5">ÁREA DE PROJETO</div>
               
               {/* User workstations */}
-              <div className="flex justify-center gap-4 mt-2 px-4">
+              <div className="flex justify-center gap-3 mt-1 px-2">
                 {/* Carneiro desk */}
                 <div className="flex flex-col items-center">
-                  <svg className="w-5 h-5 text-blue-600 mb-1" viewBox="0 0 24 24" fill="currentColor">
+                  <svg className="w-4 h-4 text-blue-600 mb-0.5" viewBox="0 0 24 24" fill="currentColor">
                     <circle cx="12" cy="8" r="4"/>
                     <path d="M12 14c-6 0-8 3-8 6v2h16v-2c0-3-2-6-8-6z"/>
                   </svg>
-                  <div className="border-2 border-gray-800 w-16 h-10 flex items-center justify-center gap-1 flex-wrap p-1">
+                  <div className="border-2 border-gray-800 w-12 h-8 flex items-center justify-center gap-0.5 flex-wrap p-0.5">
                     {getOrdersByUser("carneiro").map(({ order, index }) => (
                       <OrderChip key={order.id} order={order} index={index} />
                     ))}
@@ -298,11 +298,11 @@ export default function Production() {
                 
                 {/* Alexandre desk */}
                 <div className="flex flex-col items-center">
-                  <svg className="w-5 h-5 text-purple-600 mb-1" viewBox="0 0 24 24" fill="currentColor">
+                  <svg className="w-4 h-4 text-purple-600 mb-0.5" viewBox="0 0 24 24" fill="currentColor">
                     <circle cx="12" cy="8" r="4"/>
                     <path d="M12 14c-6 0-8 3-8 6v2h16v-2c0-3-2-6-8-6z"/>
                   </svg>
-                  <div className="border-2 border-gray-800 w-16 h-10 flex items-center justify-center gap-1 flex-wrap p-1">
+                  <div className="border-2 border-gray-800 w-12 h-8 flex items-center justify-center gap-0.5 flex-wrap p-0.5">
                     {getOrdersByUser("alexandre").map(({ order, index }) => (
                       <OrderChip key={order.id} order={order} index={index} />
                     ))}
@@ -312,12 +312,12 @@ export default function Production() {
             </div>
 
             {/* Right side workstation in project area */}
-            <div className="absolute top-[8%] right-[200px] flex flex-col items-center">
-              <svg className="w-5 h-5 text-amber-700 mb-1" viewBox="0 0 24 24" fill="currentColor">
+            <div className="absolute top-[8%] right-[160px] flex flex-col items-center">
+              <svg className="w-4 h-4 text-amber-700 mb-0.5" viewBox="0 0 24 24" fill="currentColor">
                 <circle cx="12" cy="8" r="4"/>
                 <path d="M12 14c-6 0-8 3-8 6v2h16v-2c0-3-2-6-8-6z"/>
               </svg>
-              <div className="border-2 border-gray-800 w-16 h-10 flex items-center justify-center gap-1 flex-wrap p-1">
+              <div className="border-2 border-gray-800 w-12 h-8 flex items-center justify-center gap-0.5 flex-wrap p-0.5">
                 {getOrdersByUser("henrique").map(({ order, index }) => (
                   <OrderChip key={order.id} order={order} index={index} />
                 ))}
@@ -325,9 +325,9 @@ export default function Production() {
             </div>
 
             {/* Fresadora */}
-            <div className="absolute top-[5%] right-[100px] w-[90px] h-[60px] border-2 border-gray-800 flex flex-col">
-              <div className="text-[10px] font-bold text-gray-800 text-center">FRESADORA</div>
-              <div className="flex-1 flex items-center justify-center gap-1 flex-wrap p-1">
+            <div className="absolute top-[5%] right-[75px] w-[70px] h-[50px] border-2 border-gray-800 flex flex-col">
+              <div className="text-[8px] font-bold text-gray-800 text-center">FRESADORA</div>
+              <div className="flex-1 flex items-center justify-center gap-0.5 flex-wrap p-0.5">
                 {getOrdersByStation("fresadora").map(({ order, index }) => (
                   <OrderChip key={order.id} order={order} index={index} />
                 ))}
@@ -335,9 +335,9 @@ export default function Production() {
             </div>
 
             {/* Vazado */}
-            <div className="absolute top-[5%] right-[5px] w-[90px] h-[90px] border-2 border-gray-800 flex flex-col">
-              <div className="text-xs font-bold text-gray-800 text-center pt-2">VAZADO</div>
-              <div className="flex-1 flex items-center justify-center gap-1 flex-wrap p-1">
+            <div className="absolute top-[5%] right-[3px] w-[68px] h-[70px] border-2 border-gray-800 flex flex-col">
+              <div className="text-[10px] font-bold text-gray-800 text-center pt-1">VAZADO</div>
+              <div className="flex-1 flex items-center justify-center gap-0.5 flex-wrap p-0.5">
                 {getOrdersByStation("vazado").map(({ order, index }) => (
                   <OrderChip key={order.id} order={order} index={index} />
                 ))}
@@ -345,15 +345,15 @@ export default function Production() {
             </div>
 
             {/* Middle Left - Small workstation */}
-            <div className="absolute top-[40%] left-[10%] w-14 h-14 border-2 border-gray-800 flex items-center justify-center">
+            <div className="absolute top-[40%] left-[8%] w-10 h-10 border-2 border-gray-800 flex items-center justify-center">
               {/* Door/entrance symbol */}
             </div>
 
             {/* Area de Espera */}
-            <div className="absolute top-[35%] left-[25%] w-[35%] h-[40%] border-2 border-gray-800 flex flex-col">
-              <div className="text-sm font-bold text-gray-800 text-center pt-4">ÁREA DE</div>
-              <div className="text-sm font-bold text-gray-800 text-center">ESPERA</div>
-              <div className="flex-1 flex items-center justify-center gap-2 flex-wrap p-3">
+            <div className="absolute top-[35%] left-[20%] w-[38%] h-[40%] border-2 border-gray-800 flex flex-col">
+              <div className="text-xs font-bold text-gray-800 text-center pt-2">ÁREA DE</div>
+              <div className="text-xs font-bold text-gray-800 text-center">ESPERA</div>
+              <div className="flex-1 flex items-center justify-center gap-1 flex-wrap p-2">
                 {getOrdersByStation("espera").map(({ order, index }) => (
                   <OrderChip key={order.id} order={order} index={index} />
                 ))}
@@ -361,33 +361,33 @@ export default function Production() {
             </div>
 
             {/* Vertical line on the right */}
-            <div className="absolute top-[30%] right-[95px] w-0.5 h-[45%] bg-gray-800"></div>
+            <div className="absolute top-[30%] right-[72px] w-0.5 h-[45%] bg-gray-800"></div>
 
             {/* Bottom Row */}
             {/* Saída */}
             <div 
-              className="absolute bottom-[5%] left-[5%] cursor-pointer hover:bg-gray-50 transition-colors"
+              className="absolute bottom-[5%] left-[4%] cursor-pointer hover:bg-gray-50 transition-colors"
               onClick={() => setExitDialogOpen(true)}
             >
-              <div className="text-sm font-bold text-gray-800 flex items-center gap-1">
+              <div className="text-xs font-bold text-gray-800 flex items-center gap-1">
                 SAÍDA
                 {completedOrders.length > 0 && (
-                  <span className="bg-green-500 text-white text-xs px-1.5 py-0.5 rounded-full">
+                  <span className="bg-green-500 text-white text-[10px] px-1 py-0.5 rounded-full">
                     {completedOrders.length}
                   </span>
                 )}
               </div>
               {/* Door symbol */}
-              <div className="flex items-center mt-1">
-                <div className="w-8 h-0.5 bg-gray-800"></div>
-                <div className="w-1 h-4 bg-gray-800"></div>
+              <div className="flex items-center mt-0.5">
+                <div className="w-6 h-0.5 bg-gray-800"></div>
+                <div className="w-1 h-3 bg-gray-800"></div>
               </div>
             </div>
 
             {/* Maquiagem */}
-            <div className="absolute bottom-[5%] left-[25%] w-[35%] h-[18%] border-2 border-gray-800 flex flex-col">
-              <div className="text-xs font-bold text-gray-800 text-center pt-1">MAQUIAGEM</div>
-              <div className="flex-1 flex items-center justify-center gap-1 flex-wrap p-1">
+            <div className="absolute bottom-[5%] left-[20%] w-[38%] h-[18%] border-2 border-gray-800 flex flex-col">
+              <div className="text-[10px] font-bold text-gray-800 text-center pt-0.5">MAQUIAGEM</div>
+              <div className="flex-1 flex items-center justify-center gap-0.5 flex-wrap p-0.5">
                 {getOrdersByStation("maquiagem").map(({ order, index }) => (
                   <OrderChip key={order.id} order={order} index={index} />
                 ))}
@@ -395,9 +395,9 @@ export default function Production() {
             </div>
 
             {/* Pureto */}
-            <div className="absolute bottom-[5%] right-[5px] w-[160px] h-[18%] border-2 border-gray-800 flex flex-col">
-              <div className="text-xs font-bold text-gray-800 text-center pt-1">PURETO</div>
-              <div className="flex-1 flex items-center justify-center gap-1 flex-wrap p-1">
+            <div className="absolute bottom-[5%] right-[3px] w-[130px] h-[18%] border-2 border-gray-800 flex flex-col">
+              <div className="text-[10px] font-bold text-gray-800 text-center pt-0.5">PURETO</div>
+              <div className="flex-1 flex items-center justify-center gap-0.5 flex-wrap p-0.5">
                 {getOrdersByStation("pureto").map(({ order, index }) => (
                   <OrderChip key={order.id} order={order} index={index} />
                 ))}
