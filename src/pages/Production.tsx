@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Package, Edit3, Check } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Input } from "@/components/ui/input";
 import type { Session } from "@supabase/supabase-js";
 
 // User colors mapping - neon style
@@ -71,8 +72,9 @@ const OrderChip = ({ order, index, isEditMode }: OrderChipProps) => {
   
   return (
     <div 
-      className={`w-7 h-7 rounded-full ${bg} flex items-center justify-center text-slate-900 text-xs font-bold shadow-lg ${glow} cursor-pointer hover:scale-110 transition-all border-2 border-white/30 ${isEditMode ? 'animate-pulse ring-2 ring-white' : ''}`}
+      className={`w-7 h-7 rounded-full ${bg} flex items-center justify-center text-slate-900 text-xs font-bold shadow-lg ${glow} cursor-pointer hover:scale-110 transition-all border-2 border-white/30 ${isEditMode ? 'animate-pulse ring-2 ring-white cursor-move' : ''}`}
       title={`#${index + 1} - ${order.patient_name}\nOS: ${order.order_number}\nResponsável: ${username || 'Não atribuído'}`}
+      draggable={isEditMode}
     >
       {index + 1}
     </div>
@@ -81,22 +83,58 @@ const OrderChip = ({ order, index, isEditMode }: OrderChipProps) => {
 
 interface StationBoxProps {
   title: string;
+  stationKey: string;
   children: React.ReactNode;
   className?: string;
   isEditMode?: boolean;
+  onTitleChange?: (key: string, newTitle: string) => void;
 }
 
-const StationBox = ({ title, children, className = "", isEditMode }: StationBoxProps) => (
-  <div className={`relative ${className} ${isEditMode ? 'ring-2 ring-cyan-400 ring-opacity-50' : ''}`}>
-    <div className="absolute inset-0 bg-gradient-to-br from-slate-800/80 to-slate-900/90 backdrop-blur-sm rounded-lg border border-cyan-500/30 shadow-lg shadow-cyan-500/10" />
-    <div className="relative p-2 h-full flex flex-col">
-      <div className="text-cyan-300 font-bold text-xs text-center mb-1 tracking-wider uppercase">{title}</div>
-      <div className="flex-1 flex items-center justify-center gap-1 flex-wrap">
-        {children}
+const StationBox = ({ title, stationKey, children, className = "", isEditMode, onTitleChange }: StationBoxProps) => {
+  const [localTitle, setLocalTitle] = useState(title);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setLocalTitle(title);
+  }, [title]);
+
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setLocalTitle(e.target.value);
+    onTitleChange?.(stationKey, e.target.value);
+  };
+
+  return (
+    <div className={`relative ${className} ${isEditMode ? 'ring-2 ring-cyan-400 ring-opacity-50' : ''}`}>
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-800/80 to-slate-900/90 backdrop-blur-sm rounded-lg border border-cyan-500/30 shadow-lg shadow-cyan-500/10" />
+      <div className="relative p-2 h-full flex flex-col">
+        {isEditMode ? (
+          <Input
+            ref={inputRef}
+            value={localTitle}
+            onChange={handleTitleChange}
+            className="text-cyan-300 font-bold text-xs text-center mb-1 tracking-wider uppercase bg-slate-700/50 border-cyan-500/50 h-6 px-1"
+          />
+        ) : (
+          <div className="text-cyan-300 font-bold text-xs text-center mb-1 tracking-wider uppercase">{localTitle}</div>
+        )}
+        <div className="flex-1 flex items-center justify-center gap-1 flex-wrap">
+          {children}
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
+
+// Default station titles
+const DEFAULT_STATION_TITLES: Record<string, string> = {
+  projeto: "Área de Projeto",
+  fresadora: "Fresadora",
+  vazado: "Vazado",
+  espera: "Área de Espera",
+  maquiagem: "Maquiagem",
+  pureto: "Pureto",
+  saida: "Saída",
+};
 
 export default function Production() {
   const navigate = useNavigate();
@@ -107,6 +145,14 @@ export default function Production() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [exitDialogOpen, setExitDialogOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [stationTitles, setStationTitles] = useState<Record<string, string>>(() => {
+    const saved = localStorage.getItem('production-station-titles');
+    return saved ? JSON.parse(saved) : DEFAULT_STATION_TITLES;
+  });
+  const [userNames, setUserNames] = useState<Record<string, string>>(() => {
+    const saved = localStorage.getItem('production-user-names');
+    return saved ? JSON.parse(saved) : { carneiro: "CARNEIRO", alexandre: "ALEXANDRE", henrique: "HENRIQUE" };
+  });
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -197,12 +243,23 @@ export default function Production() {
 
   const handleToggleEditMode = () => {
     if (isEditMode) {
+      // Save changes to localStorage
+      localStorage.setItem('production-station-titles', JSON.stringify(stationTitles));
+      localStorage.setItem('production-user-names', JSON.stringify(userNames));
       toast({
         title: "Alterações salvas",
-        description: "Todas as modificações foram confirmadas.",
+        description: "Todas as modificações foram confirmadas e salvas.",
       });
     }
     setIsEditMode(!isEditMode);
+  };
+
+  const handleStationTitleChange = (key: string, newTitle: string) => {
+    setStationTitles(prev => ({ ...prev, [key]: newTitle }));
+  };
+
+  const handleUserNameChange = (key: string, newName: string) => {
+    setUserNames(prev => ({ ...prev, [key]: newName }));
   };
 
   // Create indexed orders (index based on arrival order)
@@ -242,6 +299,8 @@ export default function Production() {
       </div>
     );
   }
+
+  const userColorKeys = Object.keys(USER_COLORS);
 
   return (
     <div className="h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 p-4 flex flex-col overflow-hidden relative">
@@ -297,16 +356,27 @@ export default function Production() {
         {/* Left Side - User Legend + Orders List */}
         <div className="w-48 flex-shrink-0 space-y-3 flex flex-col">
           {/* User Legend */}
-          <div className="space-y-2 flex-shrink-0 bg-slate-800/50 backdrop-blur-sm rounded-lg p-3 border border-cyan-500/20">
-            {Object.entries(USER_COLORS).map(([name, colors]) => (
-              <div key={name} className="flex items-center gap-3">
-                <svg className={`w-6 h-6 ${colors.text} drop-shadow-lg`} viewBox="0 0 24 24" fill="currentColor">
-                  <circle cx="12" cy="8" r="4"/>
-                  <path d="M12 14c-6 0-8 3-8 6v2h16v-2c0-3-2-6-8-6z"/>
-                </svg>
-                <span className={`font-bold ${colors.text} text-sm tracking-wide uppercase`}>{name}</span>
-              </div>
-            ))}
+          <div className={`space-y-2 flex-shrink-0 bg-slate-800/50 backdrop-blur-sm rounded-lg p-3 border border-cyan-500/20 ${isEditMode ? 'ring-2 ring-cyan-400/50' : ''}`}>
+            {userColorKeys.map((key) => {
+              const colors = USER_COLORS[key];
+              return (
+                <div key={key} className="flex items-center gap-3">
+                  <svg className={`w-6 h-6 ${colors.text} drop-shadow-lg flex-shrink-0`} viewBox="0 0 24 24" fill="currentColor">
+                    <circle cx="12" cy="8" r="4"/>
+                    <path d="M12 14c-6 0-8 3-8 6v2h16v-2c0-3-2-6-8-6z"/>
+                  </svg>
+                  {isEditMode ? (
+                    <Input
+                      value={userNames[key]}
+                      onChange={(e) => handleUserNameChange(key, e.target.value)}
+                      className={`font-bold ${colors.text} text-sm tracking-wide uppercase bg-slate-700/50 border-cyan-500/50 h-7 px-2`}
+                    />
+                  ) : (
+                    <span className={`font-bold ${colors.text} text-sm tracking-wide uppercase`}>{userNames[key]}</span>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           {/* Orders List */}
@@ -346,7 +416,13 @@ export default function Production() {
               
               {/* Row 1: Área de Projeto + Fresadora + Vazado */}
               <div className="col-span-2 row-span-1">
-                <StationBox title="Área de Projeto" className="h-full" isEditMode={isEditMode}>
+                <StationBox 
+                  title={stationTitles.projeto} 
+                  stationKey="projeto"
+                  className="h-full" 
+                  isEditMode={isEditMode}
+                  onTitleChange={handleStationTitleChange}
+                >
                   <div className="flex justify-center gap-6 w-full">
                     {/* Carneiro desk */}
                     <div className="flex flex-col items-center gap-1">
@@ -392,12 +468,24 @@ export default function Production() {
 
               {/* Fresadora + Vazado column */}
               <div className="row-span-1 flex flex-col gap-2">
-                <StationBox title="Fresadora" className="flex-1" isEditMode={isEditMode}>
+                <StationBox 
+                  title={stationTitles.fresadora} 
+                  stationKey="fresadora"
+                  className="flex-1" 
+                  isEditMode={isEditMode}
+                  onTitleChange={handleStationTitleChange}
+                >
                   {getOrdersByStation("fresadora").map(({ order, index }) => (
                     <OrderChip key={order.id} order={order} index={index} isEditMode={isEditMode} />
                   ))}
                 </StationBox>
-                <StationBox title="Vazado" className="flex-1" isEditMode={isEditMode}>
+                <StationBox 
+                  title={stationTitles.vazado} 
+                  stationKey="vazado"
+                  className="flex-1" 
+                  isEditMode={isEditMode}
+                  onTitleChange={handleStationTitleChange}
+                >
                   {getOrdersByStation("vazado").map(({ order, index }) => (
                     <OrderChip key={order.id} order={order} index={index} isEditMode={isEditMode} />
                   ))}
@@ -412,7 +500,13 @@ export default function Production() {
                 </div>
               </div>
 
-              <StationBox title="Área de Espera" className="row-span-1" isEditMode={isEditMode}>
+              <StationBox 
+                title={stationTitles.espera} 
+                stationKey="espera"
+                className="row-span-1" 
+                isEditMode={isEditMode}
+                onTitleChange={handleStationTitleChange}
+              >
                 <div className="flex flex-wrap gap-2 justify-center">
                   {getOrdersByStation("espera").map(({ order, index }) => (
                     <OrderChip key={order.id} order={order} index={index} isEditMode={isEditMode} />
@@ -441,17 +535,25 @@ export default function Production() {
               {/* Row 3: Saída + Maquiagem + Pureto */}
               <div 
                 className={`row-span-1 cursor-pointer group ${isEditMode ? 'ring-2 ring-cyan-400/50 rounded-lg' : ''}`}
-                onClick={() => setExitDialogOpen(true)}
+                onClick={() => !isEditMode && setExitDialogOpen(true)}
               >
                 <div className="h-full flex flex-col items-center justify-center bg-slate-800/30 rounded-lg border border-emerald-500/30 hover:border-emerald-400/50 transition-all p-2">
-                  <div className="text-emerald-400 font-bold text-sm tracking-wider uppercase flex items-center gap-2">
-                    SAÍDA
-                    {completedOrders.length > 0 && (
-                      <span className="bg-emerald-500 text-slate-900 text-xs px-2 py-0.5 rounded-full font-bold animate-pulse">
-                        {completedOrders.length}
-                      </span>
-                    )}
-                  </div>
+                  {isEditMode ? (
+                    <Input
+                      value={stationTitles.saida}
+                      onChange={(e) => handleStationTitleChange('saida', e.target.value)}
+                      className="text-emerald-400 font-bold text-sm tracking-wider uppercase bg-slate-700/50 border-emerald-500/50 h-7 px-2 w-24 text-center"
+                    />
+                  ) : (
+                    <div className="text-emerald-400 font-bold text-sm tracking-wider uppercase flex items-center gap-2">
+                      {stationTitles.saida}
+                      {completedOrders.length > 0 && (
+                        <span className="bg-emerald-500 text-slate-900 text-xs px-2 py-0.5 rounded-full font-bold animate-pulse">
+                          {completedOrders.length}
+                        </span>
+                      )}
+                    </div>
+                  )}
                   {/* Door symbol */}
                   <div className="flex items-center mt-2 gap-1">
                     <div className="w-8 h-1 bg-emerald-500/50 rounded" />
@@ -460,13 +562,25 @@ export default function Production() {
                 </div>
               </div>
 
-              <StationBox title="Maquiagem" className="row-span-1" isEditMode={isEditMode}>
+              <StationBox 
+                title={stationTitles.maquiagem} 
+                stationKey="maquiagem"
+                className="row-span-1" 
+                isEditMode={isEditMode}
+                onTitleChange={handleStationTitleChange}
+              >
                 {getOrdersByStation("maquiagem").map(({ order, index }) => (
                   <OrderChip key={order.id} order={order} index={index} isEditMode={isEditMode} />
                 ))}
               </StationBox>
 
-              <StationBox title="Pureto" className="row-span-1" isEditMode={isEditMode}>
+              <StationBox 
+                title={stationTitles.pureto} 
+                stationKey="pureto"
+                className="row-span-1" 
+                isEditMode={isEditMode}
+                onTitleChange={handleStationTitleChange}
+              >
                 {getOrdersByStation("pureto").map(({ order, index }) => (
                   <OrderChip key={order.id} order={order} index={index} isEditMode={isEditMode} />
                 ))}
