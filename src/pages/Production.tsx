@@ -70,7 +70,7 @@ const OrderChip = ({ order, index }: OrderChipProps) => {
   
   return (
     <div 
-      className={`w-7 h-7 rounded-full ${bg} ${glow} flex items-center justify-center text-white text-[10px] font-bold cursor-pointer hover:scale-125 transition-all duration-300 border-2 border-white/30 animate-pulse`}
+      className={`w-6 h-6 rounded-full ${bg} ${glow} flex items-center justify-center text-white text-[9px] font-bold cursor-pointer hover:scale-125 transition-all duration-300 border border-white/40`}
       title={`#${index + 1} - ${order.patient_name}\nOS: ${order.order_number}\nResponsável: ${username || 'Não atribuído'}`}
     >
       {index + 1}
@@ -78,106 +78,140 @@ const OrderChip = ({ order, index }: OrderChipProps) => {
   );
 };
 
-// Animated Circuit Pattern
-const CircuitPattern = () => (
-  <svg className="absolute inset-0 w-full h-full opacity-20 pointer-events-none" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <pattern id="circuit" x="0" y="0" width="100" height="100" patternUnits="userSpaceOnUse">
-        <path d="M10 10h20v0h10M40 10v20M40 30h20M60 30v20M60 50h20M80 50v20M80 70h10" 
-              stroke="currentColor" strokeWidth="1" fill="none" className="text-cyan-500">
-          <animate attributeName="stroke-dasharray" values="0,200;200,0" dur="3s" repeatCount="indefinite"/>
-        </path>
-        <circle cx="10" cy="10" r="2" className="fill-cyan-500">
-          <animate attributeName="opacity" values="0;1;0" dur="2s" repeatCount="indefinite"/>
-        </circle>
-        <circle cx="40" cy="30" r="2" className="fill-fuchsia-500">
-          <animate attributeName="opacity" values="0;1;0" dur="2.5s" repeatCount="indefinite"/>
-        </circle>
-        <circle cx="80" cy="70" r="2" className="fill-amber-500">
-          <animate attributeName="opacity" values="0;1;0" dur="1.5s" repeatCount="indefinite"/>
-        </circle>
-      </pattern>
-    </defs>
-    <rect width="100%" height="100%" fill="url(#circuit)"/>
-  </svg>
+// Circuit Board Background Pattern
+const CircuitBackground = () => (
+  <div className="absolute inset-0 overflow-hidden">
+    <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <pattern id="circuitPattern" x="0" y="0" width="120" height="120" patternUnits="userSpaceOnUse">
+          {/* Main traces */}
+          <path d="M0 60h30l10-10h20l10 10h50" stroke="rgba(6,182,212,0.3)" strokeWidth="2" fill="none">
+            <animate attributeName="stroke-dasharray" values="0,200;200,0" dur="4s" repeatCount="indefinite"/>
+          </path>
+          <path d="M60 0v30l10 10v20l-10 10v50" stroke="rgba(217,70,239,0.3)" strokeWidth="2" fill="none">
+            <animate attributeName="stroke-dasharray" values="0,200;200,0" dur="5s" repeatCount="indefinite"/>
+          </path>
+          
+          {/* Junction points */}
+          <circle cx="30" cy="60" r="3" fill="rgba(6,182,212,0.5)">
+            <animate attributeName="opacity" values="0.3;1;0.3" dur="2s" repeatCount="indefinite"/>
+          </circle>
+          <circle cx="60" cy="30" r="3" fill="rgba(217,70,239,0.5)">
+            <animate attributeName="opacity" values="0.3;1;0.3" dur="2.5s" repeatCount="indefinite"/>
+          </circle>
+          <circle cx="90" cy="60" r="3" fill="rgba(245,158,11,0.5)">
+            <animate attributeName="opacity" values="0.3;1;0.3" dur="1.8s" repeatCount="indefinite"/>
+          </circle>
+          <circle cx="60" cy="90" r="3" fill="rgba(34,197,94,0.5)">
+            <animate attributeName="opacity" values="0.3;1;0.3" dur="2.2s" repeatCount="indefinite"/>
+          </circle>
+          
+          {/* Small traces */}
+          <path d="M70 60h20" stroke="rgba(6,182,212,0.2)" strokeWidth="1" fill="none"/>
+          <path d="M60 70v20" stroke="rgba(217,70,239,0.2)" strokeWidth="1" fill="none"/>
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#circuitPattern)"/>
+    </svg>
+  </div>
 );
 
-// Floating Particles
-const FloatingParticles = () => (
+// Floating Data Particles
+const DataParticles = () => (
   <div className="absolute inset-0 overflow-hidden pointer-events-none">
-    {[...Array(20)].map((_, i) => (
+    {[...Array(30)].map((_, i) => (
       <div
         key={i}
-        className="absolute w-1 h-1 bg-cyan-400 rounded-full opacity-60"
+        className={`absolute rounded-full ${i % 3 === 0 ? 'bg-cyan-400' : i % 3 === 1 ? 'bg-fuchsia-400' : 'bg-amber-400'}`}
         style={{
+          width: `${2 + Math.random() * 3}px`,
+          height: `${2 + Math.random() * 3}px`,
           left: `${Math.random() * 100}%`,
           top: `${Math.random() * 100}%`,
-          animation: `float ${3 + Math.random() * 4}s ease-in-out infinite`,
-          animationDelay: `${Math.random() * 2}s`,
+          opacity: 0.4,
+          animation: `floatParticle ${5 + Math.random() * 5}s ease-in-out infinite`,
+          animationDelay: `${Math.random() * 3}s`,
         }}
       />
     ))}
   </div>
 );
 
-// Neon User Icon
-const NeonUserIcon = ({ color, isActive = false }: { color: string; isActive?: boolean }) => (
-  <div className={`relative ${isActive ? 'animate-pulse' : ''}`}>
-    <svg className={`w-6 h-6 ${color} drop-shadow-[0_0_8px_currentColor]`} viewBox="0 0 24 24" fill="currentColor">
-      <circle cx="12" cy="8" r="4"/>
-      <path d="M12 14c-6 0-8 3-8 6v2h16v-2c0-3-2-6-8-6z"/>
-    </svg>
-    {isActive && (
-      <div className={`absolute inset-0 ${color} blur-md opacity-50`}>
-        <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+// Neon User Avatar
+const UserAvatar = ({ color, name, isActive = false }: { color: string; name: string; isActive?: boolean }) => {
+  const colorClasses = {
+    cyan: "text-cyan-400 bg-cyan-500/20 border-cyan-500/50 shadow-[0_0_15px_rgba(6,182,212,0.5)]",
+    fuchsia: "text-fuchsia-400 bg-fuchsia-500/20 border-fuchsia-500/50 shadow-[0_0_15px_rgba(217,70,239,0.5)]",
+    amber: "text-amber-400 bg-amber-500/20 border-amber-500/50 shadow-[0_0_15px_rgba(245,158,11,0.5)]",
+  };
+
+  return (
+    <div className={`flex items-center gap-2 ${isActive ? 'animate-pulse' : ''}`}>
+      <div className={`w-5 h-5 rounded-full border-2 ${colorClasses[color as keyof typeof colorClasses]} flex items-center justify-center`}>
+        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
           <circle cx="12" cy="8" r="4"/>
           <path d="M12 14c-6 0-8 3-8 6v2h16v-2c0-3-2-6-8-6z"/>
         </svg>
       </div>
-    )}
-  </div>
-);
+      <span className={`font-mono text-xs tracking-wider ${color === 'cyan' ? 'text-cyan-400' : color === 'fuchsia' ? 'text-fuchsia-400' : 'text-amber-400'}`}>
+        {name}
+      </span>
+    </div>
+  );
+};
 
-// Station Panel Component
-const StationPanel = ({ 
+// 3D Isometric Station Component
+const IsometricStation = ({ 
   title, 
   children, 
   className = "",
+  style = {},
   glowColor = "cyan"
 }: { 
   title: string; 
   children: React.ReactNode; 
   className?: string;
+  style?: React.CSSProperties;
   glowColor?: "cyan" | "fuchsia" | "amber" | "green";
 }) => {
-  const glowClasses = {
-    cyan: "shadow-[0_0_20px_rgba(6,182,212,0.3)] border-cyan-500/50",
-    fuchsia: "shadow-[0_0_20px_rgba(217,70,239,0.3)] border-fuchsia-500/50",
-    amber: "shadow-[0_0_20px_rgba(245,158,11,0.3)] border-amber-500/50",
-    green: "shadow-[0_0_20px_rgba(34,197,94,0.3)] border-green-500/50",
+  const glowStyles = {
+    cyan: { borderColor: 'rgba(6,182,212,0.6)', boxShadow: '0 0 20px rgba(6,182,212,0.3), inset 0 0 30px rgba(6,182,212,0.1)' },
+    fuchsia: { borderColor: 'rgba(217,70,239,0.6)', boxShadow: '0 0 20px rgba(217,70,239,0.3), inset 0 0 30px rgba(217,70,239,0.1)' },
+    amber: { borderColor: 'rgba(245,158,11,0.6)', boxShadow: '0 0 20px rgba(245,158,11,0.3), inset 0 0 30px rgba(245,158,11,0.1)' },
+    green: { borderColor: 'rgba(34,197,94,0.6)', boxShadow: '0 0 20px rgba(34,197,94,0.3), inset 0 0 30px rgba(34,197,94,0.1)' },
   };
 
-  const titleColors = {
-    cyan: "text-cyan-400",
-    fuchsia: "text-fuchsia-400",
-    amber: "text-amber-400",
-    green: "text-green-400",
+  const textColors = {
+    cyan: 'text-cyan-300',
+    fuchsia: 'text-fuchsia-300',
+    amber: 'text-amber-300',
+    green: 'text-green-300',
   };
 
   return (
-    <div className={`relative bg-slate-900/80 backdrop-blur-sm border-2 ${glowClasses[glowColor]} rounded-lg overflow-hidden ${className}`}>
-      {/* Corner accents */}
-      <div className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-current opacity-60" style={{ borderColor: glowColor === 'cyan' ? '#06b6d4' : glowColor === 'fuchsia' ? '#d946ef' : glowColor === 'amber' ? '#f59e0b' : '#22c55e' }} />
-      <div className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 border-current opacity-60" style={{ borderColor: glowColor === 'cyan' ? '#06b6d4' : glowColor === 'fuchsia' ? '#d946ef' : glowColor === 'amber' ? '#f59e0b' : '#22c55e' }} />
-      <div className="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 border-current opacity-60" style={{ borderColor: glowColor === 'cyan' ? '#06b6d4' : glowColor === 'fuchsia' ? '#d946ef' : glowColor === 'amber' ? '#f59e0b' : '#22c55e' }} />
-      <div className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-current opacity-60" style={{ borderColor: glowColor === 'cyan' ? '#06b6d4' : glowColor === 'fuchsia' ? '#d946ef' : glowColor === 'amber' ? '#f59e0b' : '#22c55e' }} />
-      
-      <div className={`text-[9px] font-bold ${titleColors[glowColor]} text-center py-1 tracking-widest uppercase border-b border-current/20`}>
-        <span className="drop-shadow-[0_0_5px_currentColor]">{title}</span>
+    <div 
+      className={`absolute bg-slate-900/90 backdrop-blur-md border-2 rounded-lg overflow-hidden transition-all duration-300 hover:scale-[1.02] ${className}`}
+      style={{ ...glowStyles[glowColor], ...style }}
+    >
+      {/* Top bar with screen effect */}
+      <div className="relative">
+        <div className={`text-[10px] font-bold ${textColors[glowColor]} text-center py-1.5 tracking-[0.15em] uppercase bg-gradient-to-r from-transparent via-white/5 to-transparent`}>
+          <span className="drop-shadow-[0_0_8px_currentColor]">{title}</span>
+        </div>
+        {/* Screen scanline effect */}
+        <div className="absolute inset-0 bg-[linear-gradient(transparent_50%,rgba(0,0,0,0.1)_50%)] bg-[length:100%_2px] pointer-events-none opacity-50" />
       </div>
-      <div className="flex-1 flex items-center justify-center gap-1 flex-wrap p-2">
+      
+      {/* Content area */}
+      <div className="flex items-center justify-center gap-1.5 flex-wrap p-2 min-h-[40px]">
         {children}
       </div>
+      
+      {/* Corner accents */}
+      <div className="absolute top-0 left-0 w-2 h-2 border-t border-l opacity-80" style={{ borderColor: glowStyles[glowColor].borderColor }} />
+      <div className="absolute top-0 right-0 w-2 h-2 border-t border-r opacity-80" style={{ borderColor: glowStyles[glowColor].borderColor }} />
+      <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l opacity-80" style={{ borderColor: glowStyles[glowColor].borderColor }} />
+      <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r opacity-80" style={{ borderColor: glowStyles[glowColor].borderColor }} />
     </div>
   );
 };
@@ -313,23 +347,23 @@ export default function Production() {
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
         <div className="flex items-center gap-3 text-cyan-400">
           <Cpu className="w-8 h-8 animate-spin" />
-          <span className="text-lg font-mono tracking-wider">CARREGANDO SISTEMA...</span>
+          <span className="text-lg font-mono tracking-wider">INICIALIZANDO SISTEMA...</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-3 flex flex-col overflow-hidden relative">
-      {/* Background effects */}
-      <CircuitPattern />
-      <FloatingParticles />
+    <div className="h-screen bg-gradient-to-br from-slate-950 via-indigo-950/50 to-slate-950 flex flex-col overflow-hidden relative">
+      {/* Background circuit pattern */}
+      <CircuitBackground />
+      <DataParticles />
       
-      {/* Scanline effect */}
-      <div className="absolute inset-0 bg-[linear-gradient(transparent_50%,rgba(0,0,0,0.1)_50%)] bg-[length:100%_4px] pointer-events-none opacity-30" />
+      {/* Overlay gradient */}
+      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-slate-950/50 pointer-events-none" />
       
       {/* Header */}
-      <div className="flex items-center justify-between mb-2 flex-shrink-0 relative z-10">
+      <div className="flex items-center justify-between p-3 relative z-10 flex-shrink-0">
         <Button 
           variant="ghost" 
           size="sm" 
@@ -337,64 +371,59 @@ export default function Production() {
           className="text-cyan-400 hover:bg-cyan-500/20 hover:text-cyan-300 border border-cyan-500/30 backdrop-blur-sm"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          <span className="font-mono tracking-wide">VOLTAR</span>
+          <span className="font-mono tracking-wide text-xs">VOLTAR</span>
         </Button>
         
         <div className="flex items-center gap-2 text-cyan-400">
-          <Zap className="w-5 h-5 animate-pulse" />
-          <span className="font-mono text-sm tracking-widest">PLANTA LAB 3D</span>
-          <Zap className="w-5 h-5 animate-pulse" />
+          <Zap className="w-4 h-4 animate-pulse" />
+          <span className="font-mono text-xs tracking-[0.2em] drop-shadow-[0_0_10px_rgba(6,182,212,0.8)]">LABORATÓRIO 3D</span>
+          <Zap className="w-4 h-4 animate-pulse" />
         </div>
       </div>
 
-      <div className="flex gap-4 flex-1 min-h-0 relative z-10">
-        {/* Left Side - User Legend + Orders List */}
-        <div className="w-48 flex-shrink-0 space-y-3 flex flex-col">
-          {/* User Legend */}
-          <div className="bg-slate-900/80 backdrop-blur-sm border border-cyan-500/30 rounded-lg p-3 shadow-[0_0_20px_rgba(6,182,212,0.2)]">
-            <div className="text-xs font-bold text-cyan-400 mb-2 tracking-widest text-center border-b border-cyan-500/30 pb-2">
-              OPERADORES
-            </div>
+      {/* Main Content */}
+      <div className="flex-1 flex gap-4 p-3 pt-0 relative z-10 min-h-0">
+        
+        {/* Left Panel - Operators & Orders */}
+        <div className="w-44 flex-shrink-0 flex flex-col gap-3">
+          {/* Operators Panel */}
+          <div className="bg-slate-900/70 backdrop-blur-md border border-cyan-500/30 rounded-xl p-3 shadow-[0_0_30px_rgba(6,182,212,0.15)]">
             <div className="space-y-2">
-              <div className="flex items-center gap-3 p-1.5 rounded bg-slate-800/50 hover:bg-slate-800 transition-colors group">
-                <NeonUserIcon color="text-cyan-400" isActive={getOrdersByUser("carneiro").length > 0} />
-                <span className="font-mono text-cyan-400 text-sm tracking-wider group-hover:drop-shadow-[0_0_5px_rgba(6,182,212,0.8)]">CARNEIRO</span>
-              </div>
-              <div className="flex items-center gap-3 p-1.5 rounded bg-slate-800/50 hover:bg-slate-800 transition-colors group">
-                <NeonUserIcon color="text-fuchsia-400" isActive={getOrdersByUser("alexandre").length > 0} />
-                <span className="font-mono text-fuchsia-400 text-sm tracking-wider group-hover:drop-shadow-[0_0_5px_rgba(217,70,239,0.8)]">ALEXANDRE</span>
-              </div>
-              <div className="flex items-center gap-3 p-1.5 rounded bg-slate-800/50 hover:bg-slate-800 transition-colors group">
-                <NeonUserIcon color="text-amber-400" isActive={getOrdersByUser("henrique").length > 0} />
-                <span className="font-mono text-amber-400 text-sm tracking-wider group-hover:drop-shadow-[0_0_5px_rgba(245,158,11,0.8)]">HENRIQUE</span>
-              </div>
+              <UserAvatar color="cyan" name="CARNEIRO" isActive={getOrdersByUser("carneiro").length > 0} />
+              <UserAvatar color="fuchsia" name="ALEXANDRE" isActive={getOrdersByUser("alexandre").length > 0} />
+              <UserAvatar color="amber" name="HENRIQUE" isActive={getOrdersByUser("henrique").length > 0} />
             </div>
           </div>
 
-          {/* Orders List */}
-          <div className="bg-slate-900/80 backdrop-blur-sm border border-cyan-500/30 rounded-lg flex-1 min-h-0 flex flex-col shadow-[0_0_20px_rgba(6,182,212,0.2)]">
-            <div className="text-xs font-bold text-cyan-400 p-2 tracking-widest text-center border-b border-cyan-500/30">
-              FILA DE ORDENS
+          {/* Orders List Panel */}
+          <div className="flex-1 bg-slate-900/70 backdrop-blur-md border border-cyan-500/30 rounded-xl overflow-hidden shadow-[0_0_30px_rgba(6,182,212,0.15)] flex flex-col min-h-0">
+            <div className="text-[10px] font-bold text-cyan-400 p-2 tracking-[0.1em] text-center border-b border-cyan-500/30 bg-cyan-500/5">
+              LISTA DE PEDIDOS
             </div>
             <ScrollArea className="flex-1 p-2">
               <div className="space-y-1 text-xs font-mono">
-                {activeOrders.map(({ order, index }) => {
+                {activeOrders.slice(0, 10).map(({ order, index }) => {
                   const { bg, glow } = getUserColor(order.assigned_user?.username);
                   return (
                     <div 
                       key={order.id} 
-                      className={`flex items-center gap-2 p-1.5 rounded bg-slate-800/50 hover:bg-slate-800 transition-all hover:translate-x-1`}
+                      className="flex items-center gap-2 p-1.5 rounded-lg bg-slate-800/40 hover:bg-slate-800/60 transition-all"
                     >
-                      <div className={`w-5 h-5 rounded-full ${bg} ${glow} flex items-center justify-center text-white text-[8px] font-bold`}>
+                      <div className={`w-4 h-4 rounded-full ${bg} ${glow} flex items-center justify-center text-white text-[8px] font-bold`}>
                         {index + 1}
                       </div>
-                      <span className="text-gray-300 truncate">{order.patient_name}</span>
+                      <span className="text-gray-400 text-[10px] truncate">{order.patient_name}</span>
                     </div>
                   );
                 })}
+                {activeOrders.length > 10 && (
+                  <div className="text-gray-500 text-center text-[10px] py-1">
+                    +{activeOrders.length - 10} mais...
+                  </div>
+                )}
                 {activeOrders.length === 0 && (
-                  <div className="text-gray-500 text-center py-4 animate-pulse">
-                    AGUARDANDO DADOS...
+                  <div className="text-gray-600 text-center py-3 text-[10px] animate-pulse">
+                    Aguardando...
                   </div>
                 )}
               </div>
@@ -402,154 +431,229 @@ export default function Production() {
           </div>
         </div>
 
-        {/* Main Floor Plan */}
-        <div className="flex-1 min-h-0">
-          <div className="relative h-full bg-slate-900/60 backdrop-blur-sm border-2 border-cyan-500/40 rounded-xl shadow-[0_0_40px_rgba(6,182,212,0.2)] overflow-hidden">
-            {/* Grid background */}
-            <div className="absolute inset-0 bg-[linear-gradient(rgba(6,182,212,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(6,182,212,0.03)_1px,transparent_1px)] bg-[size:20px_20px]" />
-            
-            {/* Top Section - Area de Projeto */}
-            <div className="absolute top-2 left-2 right-[180px] h-[32%] bg-gradient-to-br from-slate-800/80 to-slate-900/80 border border-cyan-500/40 rounded-lg shadow-[0_0_25px_rgba(6,182,212,0.15)]">
-              <div className="text-[10px] font-bold text-cyan-400 text-center pt-1 tracking-[0.2em] drop-shadow-[0_0_5px_rgba(6,182,212,0.8)]">
-                ◈ ÁREA DE PROJETO ◈
+        {/* 3D Isometric Floor Plan */}
+        <div className="flex-1 relative min-h-0">
+          {/* Main container with 3D perspective */}
+          <div 
+            className="relative w-full h-full rounded-xl overflow-hidden border-2 border-cyan-500/40 bg-slate-900/50 backdrop-blur-sm"
+            style={{
+              perspective: '1000px',
+              boxShadow: '0 0 60px rgba(6,182,212,0.2), inset 0 0 100px rgba(6,182,212,0.05)'
+            }}
+          >
+            {/* Floor plane with isometric transform */}
+            <div 
+              className="absolute inset-4"
+              style={{
+                transform: 'rotateX(55deg) rotateZ(-45deg) scale(0.85)',
+                transformOrigin: 'center center',
+                transformStyle: 'preserve-3d'
+              }}
+            >
+              {/* Floor base */}
+              <div 
+                className="absolute inset-0 rounded-xl border-2 border-cyan-500/50 bg-gradient-to-br from-slate-800/90 via-slate-900/90 to-indigo-950/90"
+                style={{ boxShadow: '0 20px 60px rgba(0,0,0,0.5), inset 0 0 40px rgba(6,182,212,0.1)' }}
+              >
+                {/* Floor grid */}
+                <div className="absolute inset-0 bg-[linear-gradient(rgba(6,182,212,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(6,182,212,0.1)_1px,transparent_1px)] bg-[size:40px_40px] rounded-xl" />
+                
+                {/* Circuit traces on floor */}
+                <svg className="absolute inset-0 w-full h-full opacity-40">
+                  <path d="M50% 50% L20% 30%" stroke="rgba(6,182,212,0.4)" strokeWidth="2" fill="none">
+                    <animate attributeName="stroke-dasharray" values="0,500;500,0" dur="3s" repeatCount="indefinite"/>
+                  </path>
+                  <path d="M50% 50% L80% 30%" stroke="rgba(217,70,239,0.4)" strokeWidth="2" fill="none">
+                    <animate attributeName="stroke-dasharray" values="0,500;500,0" dur="4s" repeatCount="indefinite"/>
+                  </path>
+                  <path d="M50% 50% L30% 80%" stroke="rgba(245,158,11,0.4)" strokeWidth="2" fill="none">
+                    <animate attributeName="stroke-dasharray" values="0,500;500,0" dur="3.5s" repeatCount="indefinite"/>
+                  </path>
+                  <path d="M50% 50% L70% 80%" stroke="rgba(34,197,94,0.4)" strokeWidth="2" fill="none">
+                    <animate attributeName="stroke-dasharray" values="0,500;500,0" dur="2.5s" repeatCount="indefinite"/>
+                  </path>
+                </svg>
               </div>
-              
-              {/* User workstations */}
-              <div className="flex justify-center gap-4 mt-2 px-2">
-                {/* Carneiro desk */}
-                <div className="flex flex-col items-center group">
-                  <NeonUserIcon color="text-cyan-400" isActive={getOrdersByUser("carneiro").length > 0} />
-                  <div className="text-[8px] text-cyan-400/70 font-mono mb-1">CARNEIRO</div>
-                  <div className="border border-cyan-500/50 rounded-lg w-16 h-10 flex items-center justify-center gap-1 flex-wrap p-1 bg-slate-800/60 shadow-[inset_0_0_10px_rgba(6,182,212,0.1)]">
+            </div>
+
+            {/* Floating UI Panels (not transformed, positioned on top) */}
+            
+            {/* ÁREA DE PROJETO - Top */}
+            <IsometricStation
+              title="ÁREA DE PROJETO"
+              className="w-[200px] h-[90px]"
+              style={{ top: '5%', left: '25%' }}
+              glowColor="cyan"
+            >
+              <div className="flex gap-3">
+                {/* Carneiro */}
+                <div className="flex flex-col items-center">
+                  <div className="w-4 h-4 rounded-full bg-cyan-500/30 border border-cyan-500 flex items-center justify-center mb-1">
+                    <svg className="w-2.5 h-2.5 text-cyan-400" viewBox="0 0 24 24" fill="currentColor">
+                      <circle cx="12" cy="8" r="4"/><path d="M12 14c-6 0-8 3-8 6v2h16v-2c0-3-2-6-8-6z"/>
+                    </svg>
+                  </div>
+                  <div className="flex gap-0.5 flex-wrap justify-center max-w-[50px]">
                     {getOrdersByUser("carneiro").map(({ order, index }) => (
                       <OrderChip key={order.id} order={order} index={index} />
                     ))}
                   </div>
                 </div>
-                
-                {/* Alexandre desk */}
-                <div className="flex flex-col items-center group">
-                  <NeonUserIcon color="text-fuchsia-400" isActive={getOrdersByUser("alexandre").length > 0} />
-                  <div className="text-[8px] text-fuchsia-400/70 font-mono mb-1">ALEXANDRE</div>
-                  <div className="border border-fuchsia-500/50 rounded-lg w-16 h-10 flex items-center justify-center gap-1 flex-wrap p-1 bg-slate-800/60 shadow-[inset_0_0_10px_rgba(217,70,239,0.1)]">
+                {/* Alexandre */}
+                <div className="flex flex-col items-center">
+                  <div className="w-4 h-4 rounded-full bg-fuchsia-500/30 border border-fuchsia-500 flex items-center justify-center mb-1">
+                    <svg className="w-2.5 h-2.5 text-fuchsia-400" viewBox="0 0 24 24" fill="currentColor">
+                      <circle cx="12" cy="8" r="4"/><path d="M12 14c-6 0-8 3-8 6v2h16v-2c0-3-2-6-8-6z"/>
+                    </svg>
+                  </div>
+                  <div className="flex gap-0.5 flex-wrap justify-center max-w-[50px]">
                     {getOrdersByUser("alexandre").map(({ order, index }) => (
                       <OrderChip key={order.id} order={order} index={index} />
                     ))}
                   </div>
                 </div>
+                {/* Henrique */}
+                <div className="flex flex-col items-center">
+                  <div className="w-4 h-4 rounded-full bg-amber-500/30 border border-amber-500 flex items-center justify-center mb-1">
+                    <svg className="w-2.5 h-2.5 text-amber-400" viewBox="0 0 24 24" fill="currentColor">
+                      <circle cx="12" cy="8" r="4"/><path d="M12 14c-6 0-8 3-8 6v2h16v-2c0-3-2-6-8-6z"/>
+                    </svg>
+                  </div>
+                  <div className="flex gap-0.5 flex-wrap justify-center max-w-[50px]">
+                    {getOrdersByUser("henrique").map(({ order, index }) => (
+                      <OrderChip key={order.id} order={order} index={index} />
+                    ))}
+                  </div>
+                </div>
               </div>
-            </div>
+            </IsometricStation>
 
-            {/* Right side workstation in project area - Henrique */}
-            <div className="absolute top-[10%] right-[125px] flex flex-col items-center">
-              <NeonUserIcon color="text-amber-400" isActive={getOrdersByUser("henrique").length > 0} />
-              <div className="text-[8px] text-amber-400/70 font-mono mb-1">HENRIQUE</div>
-              <div className="border border-amber-500/50 rounded-lg w-14 h-9 flex items-center justify-center gap-1 flex-wrap p-1 bg-slate-800/60 shadow-[inset_0_0_10px_rgba(245,158,11,0.1)]">
-                {getOrdersByUser("henrique").map(({ order, index }) => (
+            {/* FRESADORA - Top Right */}
+            <IsometricStation
+              title="FRESADORA"
+              className="w-[80px] h-[70px]"
+              style={{ top: '5%', right: '15%' }}
+              glowColor="cyan"
+            >
+              <div className="flex gap-1 flex-wrap justify-center">
+                {getOrdersByStation("fresadora").map(({ order, index }) => (
                   <OrderChip key={order.id} order={order} index={index} />
                 ))}
               </div>
-            </div>
+            </IsometricStation>
 
-            {/* Fresadora */}
-            <StationPanel 
-              title="⚙ FRESADORA" 
-              className="absolute top-2 right-[70px] w-[55px] h-[60px]"
-              glowColor="cyan"
-            >
-              {getOrdersByStation("fresadora").map(({ order, index }) => (
-                <OrderChip key={order.id} order={order} index={index} />
-              ))}
-            </StationPanel>
-
-            {/* Vazado - Top Right Corner */}
-            <StationPanel 
-              title="◉ VAZADO" 
-              className="absolute top-2 right-2 w-[90px] h-[100px] z-10"
+            {/* VAZADO - Top Right Corner */}
+            <IsometricStation
+              title="VAZADO"
+              className="w-[70px] h-[70px]"
+              style={{ top: '5%', right: '2%' }}
               glowColor="fuchsia"
             >
-              {getOrdersByStation("vazado").map(({ order, index }) => (
-                <OrderChip key={order.id} order={order} index={index} />
-              ))}
-            </StationPanel>
+              <div className="flex gap-1 flex-wrap justify-center">
+                {getOrdersByStation("vazado").map(({ order, index }) => (
+                  <OrderChip key={order.id} order={order} index={index} />
+                ))}
+              </div>
+            </IsometricStation>
 
-            {/* Area de Espera */}
-            <StationPanel 
-              title="◇ ÁREA DE ESPERA ◇" 
-              className="absolute top-[36%] left-[18%] w-[40%] h-[38%]"
+            {/* ÁREA DE ESPERA - Center */}
+            <IsometricStation
+              title="ÁREA DE ESPERA"
+              className="w-[180px] h-[120px]"
+              style={{ top: '35%', left: '50%', transform: 'translateX(-50%)' }}
               glowColor="cyan"
             >
-              {getOrdersByStation("espera").map(({ order, index }) => (
-                <OrderChip key={order.id} order={order} index={index} />
-              ))}
-            </StationPanel>
+              <div className="flex gap-1.5 flex-wrap justify-center items-center p-1">
+                {getOrdersByStation("espera").map(({ order, index }) => (
+                  <div key={order.id} className="relative">
+                    <div className="absolute -top-1 -left-1 text-[8px] text-cyan-400/50 font-mono">
+                      {index + 1}
+                    </div>
+                    <OrderChip order={order} index={index} />
+                  </div>
+                ))}
+              </div>
+            </IsometricStation>
 
-            {/* Connector lines */}
-            <svg className="absolute inset-0 w-full h-full pointer-events-none">
-              <defs>
-                <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="rgba(6,182,212,0.5)" />
-                  <stop offset="50%" stopColor="rgba(217,70,239,0.5)" />
-                  <stop offset="100%" stopColor="rgba(34,197,94,0.5)" />
-                </linearGradient>
-              </defs>
-              {/* Vertical line */}
-              <line x1="78%" y1="30%" x2="78%" y2="75%" stroke="url(#lineGradient)" strokeWidth="2" strokeDasharray="5,5">
-                <animate attributeName="stroke-dashoffset" values="0;10" dur="1s" repeatCount="indefinite"/>
-              </line>
-            </svg>
+            {/* MAQUIAGEM - Bottom Center */}
+            <IsometricStation
+              title="MAQUIAGEM"
+              className="w-[140px] h-[60px]"
+              style={{ bottom: '12%', left: '35%' }}
+              glowColor="fuchsia"
+            >
+              <div className="flex gap-1 flex-wrap justify-center">
+                {getOrdersByStation("maquiagem").map(({ order, index }) => (
+                  <OrderChip key={order.id} order={order} index={index} />
+                ))}
+              </div>
+            </IsometricStation>
 
-            {/* Bottom Row */}
-            {/* Saída */}
+            {/* PURETO - Bottom Right */}
+            <IsometricStation
+              title="PURETO"
+              className="w-[100px] h-[60px]"
+              style={{ bottom: '12%', right: '8%' }}
+              glowColor="amber"
+            >
+              <div className="flex gap-1 flex-wrap justify-center">
+                {getOrdersByStation("pureto").map(({ order, index }) => (
+                  <OrderChip key={order.id} order={order} index={index} />
+                ))}
+              </div>
+            </IsometricStation>
+
+            {/* SAÍDA - Bottom Left */}
             <div 
-              className="absolute bottom-3 left-3 cursor-pointer group"
+              className="absolute cursor-pointer group"
+              style={{ bottom: '12%', left: '8%' }}
               onClick={() => setExitDialogOpen(true)}
             >
-              <div className="flex items-center gap-2 bg-gradient-to-r from-green-900/80 to-green-800/60 border border-green-500/50 rounded-lg px-3 py-2 shadow-[0_0_20px_rgba(34,197,94,0.3)] hover:shadow-[0_0_30px_rgba(34,197,94,0.5)] transition-all hover:scale-105">
-                <div className="text-xs font-bold text-green-400 tracking-widest drop-shadow-[0_0_5px_rgba(34,197,94,0.8)]">
-                  ⬡ SAÍDA
+              <div className="relative bg-slate-900/90 backdrop-blur-md border-2 rounded-lg px-4 py-3 transition-all duration-300 hover:scale-105"
+                   style={{ borderColor: 'rgba(34,197,94,0.6)', boxShadow: '0 0 25px rgba(34,197,94,0.4)' }}>
+                <div className="text-[10px] font-bold text-green-300 tracking-[0.1em] drop-shadow-[0_0_8px_rgba(34,197,94,0.8)]">
+                  ▼ SAÍDA
                 </div>
                 {completedOrders.length > 0 && (
-                  <span className="bg-green-500 text-white text-[10px] px-2 py-0.5 rounded-full animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.8)]">
+                  <span className="absolute -top-2 -right-2 bg-green-500 text-white text-[9px] w-5 h-5 rounded-full flex items-center justify-center animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.8)]">
                     {completedOrders.length}
                   </span>
                 )}
               </div>
             </div>
 
-            {/* Maquiagem */}
-            <StationPanel 
-              title="✧ MAQUIAGEM ✧" 
-              className="absolute bottom-3 left-[18%] w-[40%] h-[16%]"
-              glowColor="fuchsia"
-            >
-              {getOrdersByStation("maquiagem").map(({ order, index }) => (
-                <OrderChip key={order.id} order={order} index={index} />
-              ))}
-            </StationPanel>
+            {/* Connecting circuit lines */}
+            <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-60">
+              <defs>
+                <linearGradient id="circuitGradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="rgba(6,182,212,0.6)"/>
+                  <stop offset="100%" stopColor="rgba(217,70,239,0.6)"/>
+                </linearGradient>
+              </defs>
+              
+              {/* Vertical connection */}
+              <line x1="50%" y1="28%" x2="50%" y2="35%" stroke="url(#circuitGradient1)" strokeWidth="2" strokeDasharray="5,5">
+                <animate attributeName="stroke-dashoffset" values="0;10" dur="1s" repeatCount="indefinite"/>
+              </line>
+              
+              {/* Bottom connection */}
+              <line x1="50%" y1="65%" x2="50%" y2="75%" stroke="url(#circuitGradient1)" strokeWidth="2" strokeDasharray="5,5">
+                <animate attributeName="stroke-dashoffset" values="0;10" dur="1s" repeatCount="indefinite"/>
+              </line>
+            </svg>
 
-            {/* Pureto */}
-            <StationPanel 
-              title="△ PURETO △" 
-              className="absolute bottom-3 right-2 w-[115px] h-[16%]"
-              glowColor="amber"
-            >
-              {getOrdersByStation("pureto").map(({ order, index }) => (
-                <OrderChip key={order.id} order={order} index={index} />
-              ))}
-            </StationPanel>
-
-            {/* Small entrance indicator */}
-            <div className="absolute top-[40%] left-[5%] w-10 h-10 border border-cyan-500/30 rounded-lg flex items-center justify-center bg-slate-800/40">
-              <div className="text-cyan-400/60 text-lg">⬔</div>
-            </div>
+            {/* Holographic frame corners */}
+            <div className="absolute top-2 left-2 w-8 h-8 border-t-2 border-l-2 border-cyan-500/60 rounded-tl-lg" />
+            <div className="absolute top-2 right-2 w-8 h-8 border-t-2 border-r-2 border-cyan-500/60 rounded-tr-lg" />
+            <div className="absolute bottom-2 left-2 w-8 h-8 border-b-2 border-l-2 border-cyan-500/60 rounded-bl-lg" />
+            <div className="absolute bottom-2 right-2 w-8 h-8 border-b-2 border-r-2 border-cyan-500/60 rounded-br-lg" />
           </div>
         </div>
       </div>
 
-      {/* Exit Dialog - Shows completed orders */}
+      {/* Exit Dialog */}
       <Dialog open={exitDialogOpen} onOpenChange={setExitDialogOpen}>
-        <DialogContent className="max-w-lg bg-slate-900 border border-green-500/50 shadow-[0_0_40px_rgba(34,197,94,0.3)]">
+        <DialogContent className="max-w-lg bg-slate-900/95 backdrop-blur-xl border-2 border-green-500/50 shadow-[0_0_50px_rgba(34,197,94,0.3)]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-green-400">
               <Package className="h-5 w-5" />
@@ -589,13 +693,13 @@ export default function Production() {
         </DialogContent>
       </Dialog>
 
-      {/* CSS for floating animation */}
+      {/* Floating animation keyframes */}
       <style>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0px) translateX(0px); opacity: 0.6; }
-          25% { transform: translateY(-10px) translateX(5px); opacity: 1; }
-          50% { transform: translateY(-5px) translateX(-5px); opacity: 0.8; }
-          75% { transform: translateY(-15px) translateX(3px); opacity: 0.6; }
+        @keyframes floatParticle {
+          0%, 100% { transform: translateY(0px) translateX(0px); opacity: 0.3; }
+          25% { transform: translateY(-15px) translateX(8px); opacity: 0.6; }
+          50% { transform: translateY(-8px) translateX(-8px); opacity: 0.5; }
+          75% { transform: translateY(-20px) translateX(5px); opacity: 0.4; }
         }
       `}</style>
     </div>
