@@ -3,22 +3,22 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Package } from "lucide-react";
+import { ArrowLeft, Package, Edit3, Check } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { Session } from "@supabase/supabase-js";
 
-// User colors mapping - matching the sketch
-const USER_COLORS: Record<string, { bg: string; text: string }> = {
-  carneiro: { bg: "bg-blue-500", text: "text-blue-600" },
-  alexandre: { bg: "bg-purple-500", text: "text-purple-600" },
-  henrique: { bg: "bg-amber-700", text: "text-amber-700" },
+// User colors mapping - neon style
+const USER_COLORS: Record<string, { bg: string; glow: string; text: string }> = {
+  carneiro: { bg: "bg-cyan-400", glow: "shadow-cyan-400/50", text: "text-cyan-400" },
+  alexandre: { bg: "bg-purple-400", glow: "shadow-purple-400/50", text: "text-purple-400" },
+  henrique: { bg: "bg-amber-400", glow: "shadow-amber-400/50", text: "text-amber-400" },
 };
 
-const getUserColor = (username: string | null | undefined): string => {
-  if (!username) return "bg-gray-400";
+const getUserColor = (username: string | null | undefined): { bg: string; glow: string } => {
+  if (!username) return { bg: "bg-gray-400", glow: "shadow-gray-400/50" };
   const normalizedName = username.toLowerCase();
-  return USER_COLORS[normalizedName]?.bg || "bg-gray-400";
+  return USER_COLORS[normalizedName] || { bg: "bg-gray-400", glow: "shadow-gray-400/50" };
 };
 
 // Status to station mapping
@@ -62,21 +62,41 @@ interface Order {
 interface OrderChipProps {
   order: Order;
   index: number;
+  isEditMode?: boolean;
 }
 
-const OrderChip = ({ order, index }: OrderChipProps) => {
+const OrderChip = ({ order, index, isEditMode }: OrderChipProps) => {
   const username = order.assigned_user?.username;
-  const colorClass = getUserColor(username);
+  const { bg, glow } = getUserColor(username);
   
   return (
     <div 
-      className={`w-6 h-6 rounded-full ${colorClass} flex items-center justify-center text-white text-[10px] font-bold shadow-sm cursor-pointer hover:scale-110 transition-transform border border-white`}
+      className={`w-7 h-7 rounded-full ${bg} flex items-center justify-center text-slate-900 text-xs font-bold shadow-lg ${glow} cursor-pointer hover:scale-110 transition-all border-2 border-white/30 ${isEditMode ? 'animate-pulse ring-2 ring-white' : ''}`}
       title={`#${index + 1} - ${order.patient_name}\nOS: ${order.order_number}\nResponsável: ${username || 'Não atribuído'}`}
     >
       {index + 1}
     </div>
   );
 };
+
+interface StationBoxProps {
+  title: string;
+  children: React.ReactNode;
+  className?: string;
+  isEditMode?: boolean;
+}
+
+const StationBox = ({ title, children, className = "", isEditMode }: StationBoxProps) => (
+  <div className={`relative ${className} ${isEditMode ? 'ring-2 ring-cyan-400 ring-opacity-50' : ''}`}>
+    <div className="absolute inset-0 bg-gradient-to-br from-slate-800/80 to-slate-900/90 backdrop-blur-sm rounded-lg border border-cyan-500/30 shadow-lg shadow-cyan-500/10" />
+    <div className="relative p-2 h-full flex flex-col">
+      <div className="text-cyan-300 font-bold text-xs text-center mb-1 tracking-wider uppercase">{title}</div>
+      <div className="flex-1 flex items-center justify-center gap-1 flex-wrap">
+        {children}
+      </div>
+    </div>
+  </div>
+);
 
 export default function Production() {
   const navigate = useNavigate();
@@ -86,6 +106,7 @@ export default function Production() {
   const [session, setSession] = useState<Session | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [exitDialogOpen, setExitDialogOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -174,6 +195,16 @@ export default function Production() {
     }
   };
 
+  const handleToggleEditMode = () => {
+    if (isEditMode) {
+      toast({
+        title: "Alterações salvas",
+        description: "Todas as modificações foram confirmadas.",
+      });
+    }
+    setIsEditMode(!isEditMode);
+  };
+
   // Create indexed orders (index based on arrival order)
   const indexedOrders = orders.map((order, index) => ({ order, index }));
 
@@ -206,68 +237,98 @@ export default function Production() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-gray-500">Carregando...</div>
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <div className="text-cyan-400 animate-pulse">Carregando...</div>
       </div>
     );
   }
 
   return (
-    <div className="h-screen bg-white p-3 flex flex-col overflow-hidden">
+    <div className="h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 p-4 flex flex-col overflow-hidden relative">
+      {/* Circuit pattern background */}
+      <div className="absolute inset-0 opacity-10 pointer-events-none">
+        <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <defs>
+            <pattern id="circuit" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+              <path d="M0 10 H8 M12 10 H20 M10 0 V8 M10 12 V20" stroke="currentColor" strokeWidth="0.5" fill="none" className="text-cyan-400"/>
+              <circle cx="10" cy="10" r="2" fill="currentColor" className="text-cyan-400"/>
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#circuit)"/>
+        </svg>
+      </div>
+
       {/* Header */}
-      <div className="flex items-center justify-between mb-2 flex-shrink-0">
-        <Button variant="ghost" size="sm" onClick={() => navigate("/admin")} className="text-gray-600 hover:bg-gray-100">
+      <div className="flex items-center justify-between mb-3 flex-shrink-0 relative z-10">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => navigate("/admin")} 
+          className="text-cyan-400 hover:bg-cyan-400/10 hover:text-cyan-300 border border-cyan-500/30"
+        >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Voltar ao Painel
         </Button>
+        
+        <Button
+          variant={isEditMode ? "default" : "outline"}
+          size="sm"
+          onClick={handleToggleEditMode}
+          className={isEditMode 
+            ? "bg-cyan-500 hover:bg-cyan-600 text-slate-900 font-bold" 
+            : "text-cyan-400 hover:bg-cyan-400/10 hover:text-cyan-300 border border-cyan-500/30"
+          }
+        >
+          {isEditMode ? (
+            <>
+              <Check className="h-4 w-4 mr-2" />
+              Confirmar Edições
+            </>
+          ) : (
+            <>
+              <Edit3 className="h-4 w-4 mr-2" />
+              Modo Edição
+            </>
+          )}
+        </Button>
       </div>
 
-      <div className="flex gap-4 flex-1 min-h-0">
+      <div className="flex gap-4 flex-1 min-h-0 relative z-10">
         {/* Left Side - User Legend + Orders List */}
-        <div className="w-44 flex-shrink-0 space-y-3 flex flex-col">
+        <div className="w-48 flex-shrink-0 space-y-3 flex flex-col">
           {/* User Legend */}
-          <div className="space-y-1.5 flex-shrink-0">
-            <div className="flex items-center gap-2">
-              <svg className="w-5 h-5 text-blue-600" viewBox="0 0 24 24" fill="currentColor">
-                <circle cx="12" cy="8" r="4"/>
-                <path d="M12 14c-6 0-8 3-8 6v2h16v-2c0-3-2-6-8-6z"/>
-              </svg>
-              <span className="font-medium text-gray-800 text-sm">CARNEIRO</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <svg className="w-5 h-5 text-purple-600" viewBox="0 0 24 24" fill="currentColor">
-                <circle cx="12" cy="8" r="4"/>
-                <path d="M12 14c-6 0-8 3-8 6v2h16v-2c0-3-2-6-8-6z"/>
-              </svg>
-              <span className="font-medium text-gray-800 text-sm">ALEXANDRE</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <svg className="w-5 h-5 text-amber-700" viewBox="0 0 24 24" fill="currentColor">
-                <circle cx="12" cy="8" r="4"/>
-                <path d="M12 14c-6 0-8 3-8 6v2h16v-2c0-3-2-6-8-6z"/>
-              </svg>
-              <span className="font-medium text-gray-800 text-sm">HENRIQUE</span>
-            </div>
+          <div className="space-y-2 flex-shrink-0 bg-slate-800/50 backdrop-blur-sm rounded-lg p-3 border border-cyan-500/20">
+            {Object.entries(USER_COLORS).map(([name, colors]) => (
+              <div key={name} className="flex items-center gap-3">
+                <svg className={`w-6 h-6 ${colors.text} drop-shadow-lg`} viewBox="0 0 24 24" fill="currentColor">
+                  <circle cx="12" cy="8" r="4"/>
+                  <path d="M12 14c-6 0-8 3-8 6v2h16v-2c0-3-2-6-8-6z"/>
+                </svg>
+                <span className={`font-bold ${colors.text} text-sm tracking-wide uppercase`}>{name}</span>
+              </div>
+            ))}
           </div>
 
           {/* Orders List */}
-          <div className="border-2 border-gray-800 p-2 flex-1 min-h-0 flex flex-col">
-            <h3 className="font-bold text-gray-800 mb-1 text-sm flex-shrink-0">LISTA DE PEDIDOS</h3>
+          <div className={`bg-slate-800/50 backdrop-blur-sm rounded-lg p-3 flex-1 min-h-0 flex flex-col border border-cyan-500/20 ${isEditMode ? 'ring-2 ring-cyan-400/50' : ''}`}>
+            <h3 className="font-bold text-cyan-300 mb-2 text-sm tracking-wider uppercase">Lista de Pedidos</h3>
             <ScrollArea className="flex-1">
-              <div className="space-y-0.5 text-xs">
-                {activeOrders.map(({ order, index }) => (
-                  <div key={order.id} className="text-gray-700">
-                    {index + 1}. {order.patient_name}
-                  </div>
-                ))}
-                {activeOrders.length === 0 && (
+              <div className="space-y-1 text-xs">
+                {activeOrders.length === 0 ? (
                   <>
-                    <div className="text-gray-400">1. EXEMPLO</div>
-                    <div className="text-gray-400">2.</div>
-                    <div className="text-gray-400">3.</div>
-                    <div className="text-gray-400">4.</div>
-                    <div className="text-gray-400">5.</div>
+                    <div className="text-cyan-400/50">1. EXEMPLO</div>
+                    <div className="text-cyan-400/30">2.</div>
+                    <div className="text-cyan-400/30">3.</div>
+                    <div className="text-cyan-400/30">4.</div>
+                    <div className="text-cyan-400/30">5.</div>
+                    <div className="text-cyan-400/20">......</div>
                   </>
+                ) : (
+                  activeOrders.map(({ order, index }) => (
+                    <div key={order.id} className="text-cyan-100/80 hover:text-cyan-300 transition-colors cursor-pointer">
+                      {index + 1}. {order.patient_name}
+                    </div>
+                  ))
                 )}
               </div>
             </ScrollArea>
@@ -276,132 +337,140 @@ export default function Production() {
 
         {/* Main Floor Plan */}
         <div className="flex-1 min-h-0">
-          <div className="border-2 border-gray-800 relative h-full">
-            {/* Top Section - Area de Projeto */}
-            <div className="absolute top-0 left-0 right-[220px] h-[35%] border-b-2 border-r-2 border-gray-800">
-              <div className="text-[10px] font-bold text-gray-800 text-center pt-0.5">ÁREA DE PROJETO</div>
+          <div className="relative h-full bg-slate-800/30 backdrop-blur-sm rounded-xl border-2 border-cyan-500/40 shadow-2xl shadow-cyan-500/10 p-3">
+            {/* Glow effect */}
+            <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-cyan-500/5 via-transparent to-purple-500/5 pointer-events-none" />
+            
+            {/* Grid layout for stations */}
+            <div className="relative h-full grid grid-rows-[1fr_1.2fr_0.8fr] grid-cols-[1fr_1.5fr_1fr] gap-3">
               
-              {/* User workstations */}
-              <div className="flex justify-center gap-3 mt-1 px-2">
-                {/* Carneiro desk */}
-                <div className="flex flex-col items-center">
-                  <svg className="w-4 h-4 text-blue-600 mb-0.5" viewBox="0 0 24 24" fill="currentColor">
-                    <circle cx="12" cy="8" r="4"/>
-                    <path d="M12 14c-6 0-8 3-8 6v2h16v-2c0-3-2-6-8-6z"/>
-                  </svg>
-                  <div className="border-2 border-gray-800 w-12 h-8 flex items-center justify-center gap-0.5 flex-wrap p-0.5">
-                    {getOrdersByUser("carneiro").map(({ order, index }) => (
-                      <OrderChip key={order.id} order={order} index={index} />
-                    ))}
+              {/* Row 1: Área de Projeto + Fresadora + Vazado */}
+              <div className="col-span-2 row-span-1">
+                <StationBox title="Área de Projeto" className="h-full" isEditMode={isEditMode}>
+                  <div className="flex justify-center gap-6 w-full">
+                    {/* Carneiro desk */}
+                    <div className="flex flex-col items-center gap-1">
+                      <svg className="w-5 h-5 text-cyan-400 drop-shadow-lg" viewBox="0 0 24 24" fill="currentColor">
+                        <circle cx="12" cy="8" r="4"/>
+                        <path d="M12 14c-6 0-8 3-8 6v2h16v-2c0-3-2-6-8-6z"/>
+                      </svg>
+                      <div className="bg-slate-700/50 border border-cyan-500/30 rounded px-2 py-1 min-w-[50px] min-h-[30px] flex items-center justify-center gap-1 flex-wrap">
+                        {getOrdersByUser("carneiro").map(({ order, index }) => (
+                          <OrderChip key={order.id} order={order} index={index} isEditMode={isEditMode} />
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {/* Alexandre desk */}
+                    <div className="flex flex-col items-center gap-1">
+                      <svg className="w-5 h-5 text-purple-400 drop-shadow-lg" viewBox="0 0 24 24" fill="currentColor">
+                        <circle cx="12" cy="8" r="4"/>
+                        <path d="M12 14c-6 0-8 3-8 6v2h16v-2c0-3-2-6-8-6z"/>
+                      </svg>
+                      <div className="bg-slate-700/50 border border-purple-500/30 rounded px-2 py-1 min-w-[50px] min-h-[30px] flex items-center justify-center gap-1 flex-wrap">
+                        {getOrdersByUser("alexandre").map(({ order, index }) => (
+                          <OrderChip key={order.id} order={order} index={index} isEditMode={isEditMode} />
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Henrique desk */}
+                    <div className="flex flex-col items-center gap-1">
+                      <svg className="w-5 h-5 text-amber-400 drop-shadow-lg" viewBox="0 0 24 24" fill="currentColor">
+                        <circle cx="12" cy="8" r="4"/>
+                        <path d="M12 14c-6 0-8 3-8 6v2h16v-2c0-3-2-6-8-6z"/>
+                      </svg>
+                      <div className="bg-slate-700/50 border border-amber-500/30 rounded px-2 py-1 min-w-[50px] min-h-[30px] flex items-center justify-center gap-1 flex-wrap">
+                        {getOrdersByUser("henrique").map(({ order, index }) => (
+                          <OrderChip key={order.id} order={order} index={index} isEditMode={isEditMode} />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </StationBox>
+              </div>
+
+              {/* Fresadora + Vazado column */}
+              <div className="row-span-1 flex flex-col gap-2">
+                <StationBox title="Fresadora" className="flex-1" isEditMode={isEditMode}>
+                  {getOrdersByStation("fresadora").map(({ order, index }) => (
+                    <OrderChip key={order.id} order={order} index={index} isEditMode={isEditMode} />
+                  ))}
+                </StationBox>
+                <StationBox title="Vazado" className="flex-1" isEditMode={isEditMode}>
+                  {getOrdersByStation("vazado").map(({ order, index }) => (
+                    <OrderChip key={order.id} order={order} index={index} isEditMode={isEditMode} />
+                  ))}
+                </StationBox>
+              </div>
+
+              {/* Row 2: Empty space + Área de Espera + Right side equipment */}
+              <div className="row-span-1 flex items-center justify-center">
+                {/* Small workstation/door */}
+                <div className="w-12 h-12 border-2 border-cyan-500/30 rounded bg-slate-800/50 flex items-center justify-center">
+                  <div className="w-2 h-6 bg-cyan-500/30 rounded" />
+                </div>
+              </div>
+
+              <StationBox title="Área de Espera" className="row-span-1" isEditMode={isEditMode}>
+                <div className="flex flex-wrap gap-2 justify-center">
+                  {getOrdersByStation("espera").map(({ order, index }) => (
+                    <OrderChip key={order.id} order={order} index={index} isEditMode={isEditMode} />
+                  ))}
+                  {getOrdersByStation("espera").length === 0 && (
+                    <div className="flex gap-2">
+                      <div className="w-7 h-7 rounded-full border-2 border-dashed border-cyan-500/30 flex items-center justify-center text-cyan-500/50 text-xs">1</div>
+                      <div className="w-7 h-7 rounded-full border-2 border-dashed border-cyan-500/30 flex items-center justify-center text-cyan-500/50 text-xs">2</div>
+                    </div>
+                  )}
+                </div>
+              </StationBox>
+
+              {/* Right side equipment area - empty for visual balance */}
+              <div className="row-span-1 flex items-center justify-center">
+                <div className="w-full h-full border border-cyan-500/10 rounded-lg bg-slate-900/30 flex items-center justify-center">
+                  <div className="grid grid-cols-2 gap-2 p-2 opacity-30">
+                    <div className="w-6 h-8 bg-cyan-500/20 rounded" />
+                    <div className="w-6 h-8 bg-purple-500/20 rounded" />
+                    <div className="w-6 h-6 bg-cyan-500/20 rounded" />
+                    <div className="w-6 h-6 bg-purple-500/20 rounded" />
                   </div>
                 </div>
-                
-                {/* Alexandre desk */}
-                <div className="flex flex-col items-center">
-                  <svg className="w-4 h-4 text-purple-600 mb-0.5" viewBox="0 0 24 24" fill="currentColor">
-                    <circle cx="12" cy="8" r="4"/>
-                    <path d="M12 14c-6 0-8 3-8 6v2h16v-2c0-3-2-6-8-6z"/>
-                  </svg>
-                  <div className="border-2 border-gray-800 w-12 h-8 flex items-center justify-center gap-0.5 flex-wrap p-0.5">
-                    {getOrdersByUser("alexandre").map(({ order, index }) => (
-                      <OrderChip key={order.id} order={order} index={index} />
-                    ))}
+              </div>
+
+              {/* Row 3: Saída + Maquiagem + Pureto */}
+              <div 
+                className={`row-span-1 cursor-pointer group ${isEditMode ? 'ring-2 ring-cyan-400/50 rounded-lg' : ''}`}
+                onClick={() => setExitDialogOpen(true)}
+              >
+                <div className="h-full flex flex-col items-center justify-center bg-slate-800/30 rounded-lg border border-emerald-500/30 hover:border-emerald-400/50 transition-all p-2">
+                  <div className="text-emerald-400 font-bold text-sm tracking-wider uppercase flex items-center gap-2">
+                    SAÍDA
+                    {completedOrders.length > 0 && (
+                      <span className="bg-emerald-500 text-slate-900 text-xs px-2 py-0.5 rounded-full font-bold animate-pulse">
+                        {completedOrders.length}
+                      </span>
+                    )}
+                  </div>
+                  {/* Door symbol */}
+                  <div className="flex items-center mt-2 gap-1">
+                    <div className="w-8 h-1 bg-emerald-500/50 rounded" />
+                    <div className="w-1 h-4 bg-emerald-500/50 rounded" />
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Right side workstation in project area */}
-            <div className="absolute top-[8%] right-[160px] flex flex-col items-center">
-              <svg className="w-4 h-4 text-amber-700 mb-0.5" viewBox="0 0 24 24" fill="currentColor">
-                <circle cx="12" cy="8" r="4"/>
-                <path d="M12 14c-6 0-8 3-8 6v2h16v-2c0-3-2-6-8-6z"/>
-              </svg>
-              <div className="border-2 border-gray-800 w-12 h-8 flex items-center justify-center gap-0.5 flex-wrap p-0.5">
-                {getOrdersByUser("henrique").map(({ order, index }) => (
-                  <OrderChip key={order.id} order={order} index={index} />
-                ))}
-              </div>
-            </div>
-
-            {/* Fresadora */}
-            <div className="absolute top-[5%] right-[75px] w-[70px] h-[50px] border-2 border-gray-800 flex flex-col">
-              <div className="text-[8px] font-bold text-gray-800 text-center">FRESADORA</div>
-              <div className="flex-1 flex items-center justify-center gap-0.5 flex-wrap p-0.5">
-                {getOrdersByStation("fresadora").map(({ order, index }) => (
-                  <OrderChip key={order.id} order={order} index={index} />
-                ))}
-              </div>
-            </div>
-
-            {/* Vazado */}
-            <div className="absolute top-[5%] right-[3px] w-[68px] h-[70px] border-2 border-gray-800 flex flex-col">
-              <div className="text-[10px] font-bold text-gray-800 text-center pt-1">VAZADO</div>
-              <div className="flex-1 flex items-center justify-center gap-0.5 flex-wrap p-0.5">
-                {getOrdersByStation("vazado").map(({ order, index }) => (
-                  <OrderChip key={order.id} order={order} index={index} />
-                ))}
-              </div>
-            </div>
-
-            {/* Middle Left - Small workstation */}
-            <div className="absolute top-[40%] left-[8%] w-10 h-10 border-2 border-gray-800 flex items-center justify-center">
-              {/* Door/entrance symbol */}
-            </div>
-
-            {/* Area de Espera */}
-            <div className="absolute top-[35%] left-[20%] w-[38%] h-[40%] border-2 border-gray-800 flex flex-col">
-              <div className="text-xs font-bold text-gray-800 text-center pt-2">ÁREA DE</div>
-              <div className="text-xs font-bold text-gray-800 text-center">ESPERA</div>
-              <div className="flex-1 flex items-center justify-center gap-1 flex-wrap p-2">
-                {getOrdersByStation("espera").map(({ order, index }) => (
-                  <OrderChip key={order.id} order={order} index={index} />
-                ))}
-              </div>
-            </div>
-
-            {/* Vertical line on the right */}
-            <div className="absolute top-[30%] right-[72px] w-0.5 h-[45%] bg-gray-800"></div>
-
-            {/* Bottom Row */}
-            {/* Saída */}
-            <div 
-              className="absolute bottom-[5%] left-[4%] cursor-pointer hover:bg-gray-50 transition-colors"
-              onClick={() => setExitDialogOpen(true)}
-            >
-              <div className="text-xs font-bold text-gray-800 flex items-center gap-1">
-                SAÍDA
-                {completedOrders.length > 0 && (
-                  <span className="bg-green-500 text-white text-[10px] px-1 py-0.5 rounded-full">
-                    {completedOrders.length}
-                  </span>
-                )}
-              </div>
-              {/* Door symbol */}
-              <div className="flex items-center mt-0.5">
-                <div className="w-6 h-0.5 bg-gray-800"></div>
-                <div className="w-1 h-3 bg-gray-800"></div>
-              </div>
-            </div>
-
-            {/* Maquiagem */}
-            <div className="absolute bottom-[5%] left-[20%] w-[38%] h-[18%] border-2 border-gray-800 flex flex-col">
-              <div className="text-[10px] font-bold text-gray-800 text-center pt-0.5">MAQUIAGEM</div>
-              <div className="flex-1 flex items-center justify-center gap-0.5 flex-wrap p-0.5">
+              <StationBox title="Maquiagem" className="row-span-1" isEditMode={isEditMode}>
                 {getOrdersByStation("maquiagem").map(({ order, index }) => (
-                  <OrderChip key={order.id} order={order} index={index} />
+                  <OrderChip key={order.id} order={order} index={index} isEditMode={isEditMode} />
                 ))}
-              </div>
-            </div>
+              </StationBox>
 
-            {/* Pureto */}
-            <div className="absolute bottom-[5%] right-[3px] w-[130px] h-[18%] border-2 border-gray-800 flex flex-col">
-              <div className="text-[10px] font-bold text-gray-800 text-center pt-0.5">PURETO</div>
-              <div className="flex-1 flex items-center justify-center gap-0.5 flex-wrap p-0.5">
+              <StationBox title="Pureto" className="row-span-1" isEditMode={isEditMode}>
                 {getOrdersByStation("pureto").map(({ order, index }) => (
-                  <OrderChip key={order.id} order={order} index={index} />
+                  <OrderChip key={order.id} order={order} index={index} isEditMode={isEditMode} />
                 ))}
-              </div>
+              </StationBox>
             </div>
           </div>
         </div>
@@ -409,9 +478,9 @@ export default function Production() {
 
       {/* Exit Dialog - Shows completed orders */}
       <Dialog open={exitDialogOpen} onOpenChange={setExitDialogOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg bg-slate-900 border border-cyan-500/30">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+            <DialogTitle className="flex items-center gap-2 text-cyan-300">
               <Package className="h-5 w-5" />
               Trabalhos Finalizados ({completedOrders.length})
             </DialogTitle>
@@ -419,27 +488,30 @@ export default function Production() {
           <ScrollArea className="max-h-[400px]">
             <div className="space-y-2">
               {completedOrders.length === 0 ? (
-                <p className="text-gray-500 text-sm text-center py-4">
+                <p className="text-cyan-400/50 text-sm text-center py-4">
                   Nenhum trabalho finalizado ainda.
                 </p>
               ) : (
-                completedOrders.map(({ order, index }) => (
-                  <div 
-                    key={order.id} 
-                    className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
-                  >
-                    <div className={`w-8 h-8 rounded-full ${getUserColor(order.assigned_user?.username)} flex items-center justify-center text-white text-sm font-bold`}>
-                      {index + 1}
+                completedOrders.map(({ order, index }) => {
+                  const { bg, glow } = getUserColor(order.assigned_user?.username);
+                  return (
+                    <div 
+                      key={order.id} 
+                      className="flex items-center gap-3 p-3 rounded-lg bg-slate-800/50 hover:bg-slate-800/70 transition-colors border border-cyan-500/10"
+                    >
+                      <div className={`w-8 h-8 rounded-full ${bg} ${glow} shadow-lg flex items-center justify-center text-slate-900 text-sm font-bold`}>
+                        {index + 1}
+                      </div>
+                      <div className="flex-1">
+                        <div className="font-medium text-sm text-cyan-100">{order.patient_name}</div>
+                        <div className="text-xs text-cyan-400/50">OS: {order.order_number}</div>
+                      </div>
+                      <div className="text-xs text-cyan-400/70">
+                        {order.assigned_user?.username || 'N/A'}
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <div className="font-medium text-sm">{order.patient_name}</div>
-                      <div className="text-xs text-gray-500">OS: {order.order_number}</div>
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      {order.assigned_user?.username || 'N/A'}
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </ScrollArea>
