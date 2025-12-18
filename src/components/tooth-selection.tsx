@@ -29,8 +29,8 @@ const workTypes = [
   { value: "coping", label: "Coping", color: "bg-amber-200 hover:bg-amber-300 text-amber-900" },
   { value: "provisorio_oco", label: "Provisório Oco", color: "bg-yellow-600 hover:bg-yellow-700" },
   { value: "pontico", label: "Pôntico", color: "bg-rose-900 hover:bg-rose-950" },
-  { value: "sob_dente", label: "Sob dente", color: "bg-purple-600 hover:bg-purple-700" },
-  { value: "sob_implante", label: "Sob Implante", color: "bg-blue-800 hover:bg-blue-900" },
+  { value: "sobre_dente", label: "Sobre Dente", color: "bg-purple-600 hover:bg-purple-700" },
+  { value: "sobre_implante", label: "Sobre Implante", color: "bg-blue-800 hover:bg-blue-900" },
 ];
 
 const implantTypes = [
@@ -38,7 +38,9 @@ const implantTypes = [
   { value: "he_4.1_sem_link", label: "HE 4.1 (Sem link)", color: "bg-cyan-600 hover:bg-cyan-700" },
   { value: "he_4.1_com_link", label: "HE 4.1 (Com Link)", color: "bg-indigo-600 hover:bg-indigo-700" },
   { value: "mini_pilar", label: "Mini-Pilar", color: "bg-rose-600 hover:bg-rose-700" },
+  { value: "munhao_universal_3.3x4", label: "Munhão Universal (3.3x4)", color: "bg-pink-600 hover:bg-pink-700" },
   { value: "munhao_universal_3.3x6", label: "Munhão Universal (3.3x6)", color: "bg-violet-600 hover:bg-violet-700" },
+  { value: "munhao_universal_4.5x4", label: "Munhão Universal (4.5x4)", color: "bg-orange-600 hover:bg-orange-700" },
   { value: "munhao_universal_4.5x6", label: "Munhão Universal (4.5x6)", color: "bg-fuchsia-600 hover:bg-fuchsia-700" },
   { value: "pilar_cm_ws", label: "PILAR CM_WS", color: "bg-teal-600 hover:bg-teal-700" },
 ];
@@ -167,7 +169,7 @@ export function ToothSelection({ onSelectionChange }: ToothSelectionProps) {
       return [...prev, { toothNumber: selectedTooth, workType }];
     });
 
-    if (workType === "sob_implante") {
+    if (workType === "sobre_implante") {
       setDialogStep("implantType");
     } else {
       setDialogStep("material");
@@ -352,7 +354,7 @@ export function ToothSelection({ onSelectionChange }: ToothSelectionProps) {
                   onClick={() => {
                     if (dialogStep === "material") {
                       const config = getToothConfig(selectedTooth!);
-                      if (config?.workType === "sob_implante") {
+                      if (config?.workType === "sobre_implante") {
                         setDialogStep("implantType");
                       } else {
                         setDialogStep("workType");
