@@ -465,7 +465,7 @@ export default function Production() {
             {/* Vazado - Top Right Corner */}
             <StationPanel 
               title="◉ VAZADO" 
-              className="absolute top-2 right-2 w-[60px] h-[80px] z-10"
+              className="absolute top-2 right-2 w-[90px] h-[100px] z-10"
               glowColor="fuchsia"
             >
               {getOrdersByStation("vazado").map(({ order, index }) => (
