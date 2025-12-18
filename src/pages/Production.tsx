@@ -397,21 +397,60 @@ export default function Production() {
                       )}
                     </div>
                     
-                    <div className="flex-1 flex items-center justify-center gap-1 flex-wrap p-1 overflow-hidden">
+                    <div className="flex-1 flex items-center justify-center gap-1 flex-wrap p-2 overflow-hidden">
                       {station.stationType === 'projeto' ? (
-                        <div className="flex gap-4 justify-center w-full">
-                          {Object.entries(USER_COLORS).map(([key, colors]) => (
-                            <div key={key} className="flex flex-col items-center gap-1">
-                              <svg className={`w-4 h-4 ${colors.text}`} viewBox="0 0 24 24" fill="currentColor">
-                                <circle cx="12" cy="8" r="4"/><path d="M12 14c-6 0-8 3-8 6v2h16v-2c0-3-2-6-8-6z"/>
-                              </svg>
-                              <div className="bg-slate-700/50 border border-current rounded px-1 py-0.5 min-w-[40px] min-h-[24px] flex items-center justify-center gap-0.5 flex-wrap" style={{ borderColor: `${colors.text.includes('cyan') ? '#22d3ee' : colors.text.includes('purple') ? '#a855f7' : '#f59e0b'}30` }}>
-                                {getOrdersByUser(key).map(({ order, index }) => (
-                                  <OrderChip key={order.id} order={order} index={index} isEditMode={isEditMode} />
-                                ))}
+                        <div className="flex gap-6 justify-center w-full items-end">
+                          {Object.entries(USER_COLORS).map(([key, colors]) => {
+                            const colorHex = colors.text.includes('cyan') ? '#22d3ee' : colors.text.includes('purple') ? '#a855f7' : '#f59e0b';
+                            return (
+                              <div key={key} className="flex flex-col items-center gap-1 relative">
+                                {/* Monitor/Computer */}
+                                <div className="relative">
+                                  {/* Monitor Screen */}
+                                  <div 
+                                    className="w-16 h-10 rounded-sm border-2 relative overflow-hidden"
+                                    style={{ 
+                                      borderColor: colorHex,
+                                      background: `linear-gradient(135deg, ${colorHex}10 0%, ${colorHex}30 50%, ${colorHex}10 100%)`,
+                                      boxShadow: `0 0 15px ${colorHex}40, inset 0 0 10px ${colorHex}20`
+                                    }}
+                                  >
+                                    {/* Screen content - grid lines */}
+                                    <div className="absolute inset-0 opacity-30">
+                                      <div className="w-full h-full" style={{
+                                        backgroundImage: `linear-gradient(${colorHex}40 1px, transparent 1px), linear-gradient(90deg, ${colorHex}40 1px, transparent 1px)`,
+                                        backgroundSize: '4px 4px'
+                                      }} />
+                                    </div>
+                                    {/* Screen glow effect */}
+                                    <div className="absolute inset-0 animate-pulse opacity-50" style={{
+                                      background: `radial-gradient(ellipse at center, ${colorHex}30 0%, transparent 70%)`
+                                    }} />
+                                    {/* Order chips on screen */}
+                                    <div className="absolute inset-0 flex items-center justify-center gap-0.5 flex-wrap p-0.5">
+                                      {getOrdersByUser(key).map(({ order, index }) => (
+                                        <OrderChip key={order.id} order={order} index={index} isEditMode={isEditMode} />
+                                      ))}
+                                    </div>
+                                  </div>
+                                  {/* Monitor Stand */}
+                                  <div className="mx-auto w-3 h-2 rounded-b" style={{ backgroundColor: `${colorHex}60` }} />
+                                  <div className="mx-auto w-8 h-1 rounded-full" style={{ backgroundColor: `${colorHex}40` }} />
+                                </div>
+                                
+                                {/* User silhouette sitting at computer */}
+                                <svg className={`w-6 h-6 ${colors.text} drop-shadow-lg`} viewBox="0 0 24 24" fill="currentColor" style={{ filter: `drop-shadow(0 0 4px ${colorHex})` }}>
+                                  <circle cx="12" cy="6" r="3"/>
+                                  <path d="M12 10c-4 0-6 2-6 4v4h12v-4c0-2-2-4-6-4z"/>
+                                </svg>
+                                
+                                {/* Username label */}
+                                <span className="text-[8px] font-bold uppercase tracking-wider" style={{ color: colorHex }}>
+                                  {userNames[key]}
+                                </span>
                               </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       ) : (
                         getOrdersByStation(station.stationType).map(({ order, index }) => (
