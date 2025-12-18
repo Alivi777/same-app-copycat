@@ -454,7 +454,7 @@ export default function Production() {
             {/* Fresadora */}
             <StationPanel 
               title="⚙ FRESADORA" 
-              className="absolute top-2 right-[60px] w-[55px] h-[60px]"
+              className="absolute top-2 right-[70px] w-[55px] h-[60px]"
               glowColor="cyan"
             >
               {getOrdersByStation("fresadora").map(({ order, index }) => (
@@ -462,10 +462,10 @@ export default function Production() {
               ))}
             </StationPanel>
 
-            {/* Vazado */}
+            {/* Vazado - Top Right Corner */}
             <StationPanel 
               title="◉ VAZADO" 
-              className="absolute top-2 right-2 w-[52px] h-[75px]"
+              className="absolute top-2 right-2 w-[60px] h-[80px] z-10"
               glowColor="fuchsia"
             >
               {getOrdersByStation("vazado").map(({ order, index }) => (
