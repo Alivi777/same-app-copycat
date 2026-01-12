@@ -5,13 +5,6 @@ import { Label } from "@/components/ui/label";
 import { Smile, X, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -322,18 +315,13 @@ export function ToothSelection({ onSelectionChange }: ToothSelectionProps) {
               <Smile className="text-burgundy-500" size={20} />
               Seleção de Dentes
             </CardTitle>
-            <Select value={selectedPreset} onValueChange={handlePresetChange}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Selecione um preset" />
-              </SelectTrigger>
-              <SelectContent>
-                {presetOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Button
+              variant={selectedPreset === "placa_miorrelaxante" ? "default" : "outline"}
+              size="sm"
+              onClick={() => handlePresetChange(selectedPreset === "placa_miorrelaxante" ? "none" : "placa_miorrelaxante")}
+            >
+              Placa Miorrelaxante
+            </Button>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
