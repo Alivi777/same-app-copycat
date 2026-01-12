@@ -58,11 +58,8 @@ const presetOptions = [
   { value: "placa_miorrelaxante", label: "Placa Miorrelaxante" },
 ];
 
-// Teeth to select for Placa Miorrelaxante
-const placaMiorrelaxanteTeeth = {
-  upper: ["16", "15", "14", "13", "12", "11", "21", "22", "23", "24", "25", "26"],
-  lower: ["46", "45", "44", "43", "42", "41", "31", "32", "33", "34", "35", "36"],
-};
+// Teeth to select for Placa Miorrelaxante (only upper arch)
+const placaMiorrelaxanteTeeth = ["16", "15", "14", "13", "12", "11", "21", "22", "23", "24", "25", "26"];
 
 export function ToothSelection({ onSelectionChange }: ToothSelectionProps) {
   const [toothConfigs, setToothConfigs] = useState<ToothConfig[]>([]);
@@ -82,9 +79,8 @@ export function ToothSelection({ onSelectionChange }: ToothSelectionProps) {
       // Save current configs before applying preset
       setPreviousConfigs(toothConfigs);
       
-      // Select all teeth for Placa Miorrelaxante
-      const allPresetTeeth = [...placaMiorrelaxanteTeeth.upper, ...placaMiorrelaxanteTeeth.lower];
-      const newConfigs: ToothConfig[] = allPresetTeeth.map((tooth) => ({
+      // Select only upper arch teeth for Placa Miorrelaxante
+      const newConfigs: ToothConfig[] = placaMiorrelaxanteTeeth.map((tooth) => ({
         toothNumber: tooth,
         workType: "placa_miorrelaxante",
         material: "pmma",
