@@ -1,32 +1,18 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { BarChart3, PieChart, LogOut, ArrowLeft, Clock, TrendingUp, CheckCircle } from "lucide-react";
+import { BarChart3, PieChart, LogOut, ArrowLeft, Clock, TrendingUp, CheckCircle, Users, Calendar } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { Session } from "@supabase/supabase-js";
 import { formatDuration } from "@/hooks/useOrderStatusTracking";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, PieChart as RechartsPieChart, Pie, Cell, Legend, Tooltip } from "recharts";
-import { format, subDays, startOfDay, endOfDay } from "date-fns";
+import { format, subDays, subWeeks, subMonths, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval } from "date-fns";
 import { ptBR } from "date-fns/locale";
-
-interface OrderWithHistory {
-  id: string;
-  patient_name: string;
-  order_number: string;
-  status: string;
-  created_at: string;
-  assigned_user?: { username: string };
-  statusHistory: StatusHistoryEntry[];
-}
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 interface StatusHistoryEntry {
   id: string;
@@ -48,7 +34,22 @@ interface PerformanceData {
   totalSeconds: number | null;
 }
 
-const COLORS = ['hsl(var(--primary))', 'hsl(217, 91%, 60%)', 'hsl(142, 71%, 45%)', 'hsl(45, 93%, 47%)', 'hsl(280, 65%, 60%)'];
+interface UserPerformance {
+  username: string;
+  completedOrders: number;
+  avgTimeSeconds: number;
+  totalTimeSeconds: number;
+}
+
+type PeriodFilter = 'daily' | 'weekly' | 'monthly';
+
+const COLORS = ['hsl(var(--primary))', 'hsl(217, 91%, 60%)', 'hsl(142, 71%, 45%)', 'hsl(45, 93%, 47%)', 'hsl(280, 65%, 60%)', 'hsl(340, 82%, 52%)'];
+
+const USER_COLORS: Record<string, string> = {
+  'Alexandre': 'hsl(280, 65%, 50%)',
+  'Carneiro': 'hsl(187, 85%, 45%)',
+  'Henrique': 'hsl(35, 92%, 40%)',
+};
 
 export default function Analytics() {
   const navigate = useNavigate();
@@ -59,9 +60,7 @@ export default function Analytics() {
   const [orders, setOrders] = useState<any[]>([]);
   const [statusHistory, setStatusHistory] = useState<StatusHistoryEntry[]>([]);
   const [profiles, setProfiles] = useState<any[]>([]);
-  const [completionTimeData, setCompletionTimeData] = useState<any[]>([]);
-  const [statusDistributionData, setStatusDistributionData] = useState<any[]>([]);
-  const [performanceData, setPerformanceData] = useState<PerformanceData[]>([]);
+  const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('weekly');
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -100,7 +99,6 @@ export default function Analytics() {
 
   const fetchData = async () => {
     try {
-      // Fetch orders with assigned user
       const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
         .select(`
@@ -112,7 +110,6 @@ export default function Analytics() {
       if (ordersError) throw ordersError;
       setOrders(ordersData || []);
 
-      // Fetch all status history
       const { data: historyData, error: historyError } = await supabase
         .from('order_status_history')
         .select('*')
@@ -121,16 +118,12 @@ export default function Analytics() {
       if (historyError) throw historyError;
       setStatusHistory(historyData || []);
 
-      // Fetch profiles
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('user_id, username');
 
       if (profilesError) throw profilesError;
       setProfiles(profilesData || []);
-
-      // Process data for charts
-      processChartData(ordersData || [], historyData || [], profilesData || []);
     } catch (error) {
       console.error('Error fetching analytics data:', error);
       toast({
@@ -143,32 +136,58 @@ export default function Analytics() {
     }
   };
 
-  const processChartData = (orders: any[], history: StatusHistoryEntry[], profiles: any[]) => {
-    // Process completion time by day (last 7 days)
-    const completionTimes: Record<string, { total: number; count: number }> = {};
-    const last7Days = Array.from({ length: 7 }, (_, i) => {
-      const date = subDays(new Date(), 6 - i);
-      return format(date, 'yyyy-MM-dd');
-    });
+  // Get date range based on period filter
+  const getDateRange = useMemo(() => {
+    const now = new Date();
+    switch (periodFilter) {
+      case 'daily':
+        return {
+          start: subDays(now, 6),
+          end: now,
+          intervals: eachDayOfInterval({ start: subDays(now, 6), end: now }),
+          formatLabel: (date: Date) => format(date, 'dd/MM', { locale: ptBR }),
+          formatKey: (date: Date) => format(date, 'yyyy-MM-dd'),
+        };
+      case 'weekly':
+        return {
+          start: subWeeks(now, 3),
+          end: now,
+          intervals: eachWeekOfInterval({ start: subWeeks(now, 3), end: now }, { locale: ptBR }),
+          formatLabel: (date: Date) => `Sem ${format(date, 'dd/MM', { locale: ptBR })}`,
+          formatKey: (date: Date) => format(startOfWeek(date, { locale: ptBR }), 'yyyy-MM-dd'),
+        };
+      case 'monthly':
+        return {
+          start: subMonths(now, 5),
+          end: now,
+          intervals: eachMonthOfInterval({ start: subMonths(now, 5), end: now }),
+          formatLabel: (date: Date) => format(date, 'MMM/yy', { locale: ptBR }),
+          formatKey: (date: Date) => format(startOfMonth(date), 'yyyy-MM'),
+        };
+    }
+  }, [periodFilter]);
 
-    // Initialize all days
-    last7Days.forEach(day => {
-      completionTimes[day] = { total: 0, count: 0 };
-    });
-
-    // Group history by order
+  // Process chart data based on period filter
+  const processedData = useMemo(() => {
     const orderHistories: Record<string, StatusHistoryEntry[]> = {};
-    history.forEach(h => {
+    statusHistory.forEach(h => {
       if (!orderHistories[h.order_id]) {
         orderHistories[h.order_id] = [];
       }
       orderHistories[h.order_id].push(h);
     });
 
-    // Calculate completion times for each order
-    const performanceResults: PerformanceData[] = [];
     const acceptedStatuses = ['in-progress', 'projetando'];
-    
+    const performanceResults: PerformanceData[] = [];
+    const userStats: Record<string, { completedOrders: number; totalTimeSeconds: number }> = {};
+    const completionTimes: Record<string, { total: number; count: number }> = {};
+
+    // Initialize intervals
+    getDateRange.intervals.forEach(date => {
+      const key = getDateRange.formatKey(date);
+      completionTimes[key] = { total: 0, count: 0 };
+    });
+
     Object.entries(orderHistories).forEach(([orderId, orderHistory]) => {
       const order = orders.find(o => o.id === orderId);
       if (!order) return;
@@ -180,11 +199,14 @@ export default function Analytics() {
         const startTime = new Date(acceptedEntry.changed_at);
         const endTime = new Date(completedEntry.changed_at);
         const totalSeconds = Math.floor((endTime.getTime() - startTime.getTime()) / 1000);
-        
-        const completionDay = format(endTime, 'yyyy-MM-dd');
-        if (completionTimes[completionDay]) {
-          completionTimes[completionDay].total += totalSeconds;
-          completionTimes[completionDay].count += 1;
+
+        // Check if within date range
+        if (endTime >= getDateRange.start && endTime <= getDateRange.end) {
+          const key = getDateRange.formatKey(endTime);
+          if (completionTimes[key]) {
+            completionTimes[key].total += totalSeconds;
+            completionTimes[key].count += 1;
+          }
         }
 
         // Get all unique users who worked on this order
@@ -192,6 +214,15 @@ export default function Analytics() {
         const usernames = uniqueUserIds
           .map(userId => profiles.find(p => p.user_id === userId)?.username || 'Desconhecido')
           .filter(Boolean);
+
+        // Track user performance
+        usernames.forEach(username => {
+          if (!userStats[username]) {
+            userStats[username] = { completedOrders: 0, totalTimeSeconds: 0 };
+          }
+          userStats[username].completedOrders += 1;
+          userStats[username].totalTimeSeconds += totalSeconds;
+        });
 
         performanceResults.push({
           orderId,
@@ -206,17 +237,16 @@ export default function Analytics() {
     });
 
     // Format completion time data for chart
-    const formattedCompletionData = last7Days.map(day => {
-      const dayData = completionTimes[day];
+    const completionTimeData = getDateRange.intervals.map(date => {
+      const key = getDateRange.formatKey(date);
+      const dayData = completionTimes[key] || { total: 0, count: 0 };
       const avgMinutes = dayData.count > 0 ? Math.round(dayData.total / dayData.count / 60) : 0;
       return {
-        day: format(new Date(day), 'EEE', { locale: ptBR }),
+        label: getDateRange.formatLabel(date),
         avgMinutes,
-        label: format(new Date(day), 'dd/MM', { locale: ptBR }),
+        count: dayData.count,
       };
     });
-
-    setCompletionTimeData(formattedCompletionData);
 
     // Process status distribution
     const statusCounts: Record<string, number> = {};
@@ -225,12 +255,10 @@ export default function Analytics() {
       statusCounts[status] = (statusCounts[status] || 0) + 1;
     });
 
-    const statusData = Object.entries(statusCounts).map(([name, value]) => ({
+    const statusDistributionData = Object.entries(statusCounts).map(([name, value]) => ({
       name,
       value,
     }));
-
-    setStatusDistributionData(statusData);
 
     // Sort performance data by completion date (most recent first)
     performanceResults.sort((a, b) => {
@@ -238,8 +266,23 @@ export default function Analytics() {
       return new Date(b.endDate).getTime() - new Date(a.endDate).getTime();
     });
 
-    setPerformanceData(performanceResults.slice(0, 20)); // Last 20 completed orders
-  };
+    // Calculate user performance data
+    const userPerformanceData: UserPerformance[] = Object.entries(userStats)
+      .map(([username, stats]) => ({
+        username,
+        completedOrders: stats.completedOrders,
+        avgTimeSeconds: Math.round(stats.totalTimeSeconds / stats.completedOrders),
+        totalTimeSeconds: stats.totalTimeSeconds,
+      }))
+      .sort((a, b) => b.completedOrders - a.completedOrders);
+
+    return {
+      completionTimeData,
+      statusDistributionData,
+      performanceData: performanceResults.slice(0, 20),
+      userPerformanceData,
+    };
+  }, [orders, statusHistory, profiles, getDateRange]);
 
   const getStatusLabel = (status: string): string => {
     const labels: Record<string, string> = {
@@ -263,15 +306,22 @@ export default function Analytics() {
     navigate("/login");
   };
 
+  const getPeriodLabel = () => {
+    switch (periodFilter) {
+      case 'daily': return 'Últimos 7 dias';
+      case 'weekly': return 'Últimas 4 semanas';
+      case 'monthly': return 'Últimos 6 meses';
+    }
+  };
+
   if (!isAdmin) {
     return null;
   }
 
-  // Calculate summary stats
   const totalOrders = orders.length;
   const completedOrders = orders.filter(o => o.status === 'completed').length;
-  const avgCompletionTime = performanceData.length > 0
-    ? Math.round(performanceData.reduce((acc, p) => acc + (p.totalSeconds || 0), 0) / performanceData.length)
+  const avgCompletionTime = processedData.performanceData.length > 0
+    ? Math.round(processedData.performanceData.reduce((acc, p) => acc + (p.totalSeconds || 0), 0) / processedData.performanceData.length)
     : 0;
 
   return (
@@ -303,6 +353,34 @@ export default function Analytics() {
           <div className="text-center py-8">Carregando dados...</div>
         ) : (
           <div className="space-y-6">
+            {/* Period Filter */}
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-5 w-5 text-muted-foreground" />
+                    <span className="text-sm font-medium">Período de análise:</span>
+                  </div>
+                  <ToggleGroup 
+                    type="single" 
+                    value={periodFilter} 
+                    onValueChange={(value) => value && setPeriodFilter(value as PeriodFilter)}
+                    className="gap-1"
+                  >
+                    <ToggleGroupItem value="daily" aria-label="Diário" className="px-4">
+                      Diário
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="weekly" aria-label="Semanal" className="px-4">
+                      Semanal
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="monthly" aria-label="Mensal" className="px-4">
+                      Mensal
+                    </ToggleGroupItem>
+                  </ToggleGroup>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Card>
@@ -355,14 +433,14 @@ export default function Analytics() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <TrendingUp className="h-5 w-5 text-primary" />
-                    Tempo Médio de Conclusão (Últimos 7 dias)
+                    Tempo Médio de Conclusão ({getPeriodLabel()})
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="h-[300px]">
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={completionTimeData}>
-                        <XAxis dataKey="label" tick={{ fill: 'hsl(var(--foreground))' }} />
+                      <BarChart data={processedData.completionTimeData}>
+                        <XAxis dataKey="label" tick={{ fill: 'hsl(var(--foreground))', fontSize: 12 }} />
                         <YAxis 
                           tick={{ fill: 'hsl(var(--foreground))' }} 
                           label={{ value: 'Minutos', angle: -90, position: 'insideLeft', fill: 'hsl(var(--foreground))' }}
@@ -375,6 +453,9 @@ export default function Analytics() {
                                   <p className="text-sm font-medium">{payload[0].payload.label}</p>
                                   <p className="text-sm text-muted-foreground">
                                     Média: {payload[0].value} min
+                                  </p>
+                                  <p className="text-sm text-muted-foreground">
+                                    Pedidos: {payload[0].payload.count}
                                   </p>
                                 </div>
                               );
@@ -402,7 +483,7 @@ export default function Analytics() {
                     <ResponsiveContainer width="100%" height="100%">
                       <RechartsPieChart>
                         <Pie
-                          data={statusDistributionData}
+                          data={processedData.statusDistributionData}
                           cx="50%"
                           cy="50%"
                           innerRadius={60}
@@ -412,7 +493,7 @@ export default function Analytics() {
                           label={({ name, value }) => `${name}: ${value}`}
                           labelLine={false}
                         >
-                          {statusDistributionData.map((_, index) => (
+                          {processedData.statusDistributionData.map((_, index) => (
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                           ))}
                         </Pie>
@@ -439,6 +520,160 @@ export default function Analytics() {
               </Card>
             </div>
 
+            {/* User Performance Chart */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-primary" />
+                  Performance por Usuário
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {processedData.userPerformanceData.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    Nenhum dado de performance por usuário disponível.
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Bar Chart - Orders per User */}
+                    <div>
+                      <h4 className="text-sm font-medium mb-4 text-center">Pedidos Concluídos por Usuário</h4>
+                      <div className="h-[250px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={processedData.userPerformanceData} layout="vertical">
+                            <XAxis type="number" tick={{ fill: 'hsl(var(--foreground))' }} />
+                            <YAxis 
+                              type="category" 
+                              dataKey="username" 
+                              tick={{ fill: 'hsl(var(--foreground))' }}
+                              width={80}
+                            />
+                            <Tooltip 
+                              content={({ active, payload }) => {
+                                if (active && payload && payload.length) {
+                                  return (
+                                    <div className="bg-popover border border-border rounded-lg p-2 shadow-lg">
+                                      <p className="text-sm font-medium">{payload[0].payload.username}</p>
+                                      <p className="text-sm text-muted-foreground">
+                                        Pedidos: {payload[0].value}
+                                      </p>
+                                    </div>
+                                  );
+                                }
+                                return null;
+                              }}
+                            />
+                            <Bar 
+                              dataKey="completedOrders" 
+                              radius={[0, 4, 4, 0]}
+                            >
+                              {processedData.userPerformanceData.map((entry, index) => (
+                                <Cell 
+                                  key={`cell-${index}`} 
+                                  fill={USER_COLORS[entry.username] || COLORS[index % COLORS.length]} 
+                                />
+                              ))}
+                            </Bar>
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+
+                    {/* Bar Chart - Avg Time per User */}
+                    <div>
+                      <h4 className="text-sm font-medium mb-4 text-center">Tempo Médio por Pedido (minutos)</h4>
+                      <div className="h-[250px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart 
+                            data={processedData.userPerformanceData.map(u => ({
+                              ...u,
+                              avgTimeMinutes: Math.round(u.avgTimeSeconds / 60)
+                            }))} 
+                            layout="vertical"
+                          >
+                            <XAxis type="number" tick={{ fill: 'hsl(var(--foreground))' }} />
+                            <YAxis 
+                              type="category" 
+                              dataKey="username" 
+                              tick={{ fill: 'hsl(var(--foreground))' }}
+                              width={80}
+                            />
+                            <Tooltip 
+                              content={({ active, payload }) => {
+                                if (active && payload && payload.length) {
+                                  return (
+                                    <div className="bg-popover border border-border rounded-lg p-2 shadow-lg">
+                                      <p className="text-sm font-medium">{payload[0].payload.username}</p>
+                                      <p className="text-sm text-muted-foreground">
+                                        Tempo médio: {formatDuration(payload[0].payload.avgTimeSeconds)}
+                                      </p>
+                                    </div>
+                                  );
+                                }
+                                return null;
+                              }}
+                            />
+                            <Bar 
+                              dataKey="avgTimeMinutes" 
+                              radius={[0, 4, 4, 0]}
+                            >
+                              {processedData.userPerformanceData.map((entry, index) => (
+                                <Cell 
+                                  key={`cell-${index}`} 
+                                  fill={USER_COLORS[entry.username] || COLORS[index % COLORS.length]} 
+                                />
+                              ))}
+                            </Bar>
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* User Stats Table */}
+                {processedData.userPerformanceData.length > 0 && (
+                  <div className="mt-6">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Usuário</TableHead>
+                          <TableHead className="text-center">Pedidos Concluídos</TableHead>
+                          <TableHead className="text-center">Tempo Médio</TableHead>
+                          <TableHead className="text-center">Tempo Total</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {processedData.userPerformanceData.map((user) => (
+                          <TableRow key={user.username}>
+                            <TableCell>
+                              <span 
+                                className="px-3 py-1 rounded font-medium text-white"
+                                style={{ backgroundColor: USER_COLORS[user.username] || COLORS[0] }}
+                              >
+                                {user.username}
+                              </span>
+                            </TableCell>
+                            <TableCell className="text-center font-medium">{user.completedOrders}</TableCell>
+                            <TableCell className="text-center">
+                              <Badge variant="outline" className="font-mono">
+                                {formatDuration(user.avgTimeSeconds)}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <Badge variant="secondary" className="font-mono">
+                                {formatDuration(user.totalTimeSeconds)}
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
             {/* Performance Table */}
             <Card>
               <CardHeader>
@@ -460,7 +695,7 @@ export default function Analytics() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {performanceData.length === 0 ? (
+                    {processedData.performanceData.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                           Nenhum pedido finalizado com histórico de status encontrado.
@@ -469,7 +704,7 @@ export default function Analytics() {
                         </TableCell>
                       </TableRow>
                     ) : (
-                      performanceData.map((perf) => (
+                      processedData.performanceData.map((perf) => (
                         <TableRow key={perf.orderId}>
                           <TableCell className="font-medium">{perf.orderNumber}</TableCell>
                           <TableCell>{perf.patientName}</TableCell>
