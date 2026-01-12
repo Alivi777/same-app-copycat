@@ -5,6 +5,13 @@ import { Label } from "@/components/ui/label";
 import { Smile, X, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -52,16 +59,54 @@ const materials = [
   { value: "modelo_3d", label: "Modelo 3D", color: "bg-neutral-600 hover:bg-neutral-700" },
 ];
 
+// Preset options for quick selection
+const presetOptions = [
+  { value: "none", label: "Selecione um preset" },
+  { value: "placa_miorrelaxante", label: "Placa Miorrelaxante" },
+];
+
+// Teeth to select for Placa Miorrelaxante
+const placaMiorrelaxanteTeeth = {
+  upper: ["16", "15", "14", "13", "12", "11", "21", "22", "23", "24", "25", "26"],
+  lower: ["46", "45", "44", "43", "42", "41", "31", "32", "33", "34", "35", "36"],
+};
+
 export function ToothSelection({ onSelectionChange }: ToothSelectionProps) {
   const [toothConfigs, setToothConfigs] = useState<ToothConfig[]>([]);
   const [selectedTooth, setSelectedTooth] = useState<string | null>(null);
   const [dialogStep, setDialogStep] = useState<"workType" | "implantType" | "material">("workType");
   const [lastConfiguredTooth, setLastConfiguredTooth] = useState<ToothConfig | null>(null);
+  const [selectedPreset, setSelectedPreset] = useState<string>("none");
+  const [previousConfigs, setPreviousConfigs] = useState<ToothConfig[]>([]);
 
   const upperRight = ["18", "17", "16", "15", "14", "13", "12", "11"];
   const upperLeft = ["21", "22", "23", "24", "25", "26", "27", "28"];
   const lowerRight = ["48", "47", "46", "45", "44", "43", "42", "41"];
   const lowerLeft = ["31", "32", "33", "34", "35", "36", "37", "38"];
+
+  const handlePresetChange = (value: string) => {
+    if (value === "placa_miorrelaxante") {
+      // Save current configs before applying preset
+      setPreviousConfigs(toothConfigs);
+      
+      // Select all teeth for Placa Miorrelaxante
+      const allPresetTeeth = [...placaMiorrelaxanteTeeth.upper, ...placaMiorrelaxanteTeeth.lower];
+      const newConfigs: ToothConfig[] = allPresetTeeth.map((tooth) => ({
+        toothNumber: tooth,
+        workType: "placa_miorrelaxante",
+        material: "pmma",
+      }));
+      
+      setToothConfigs(newConfigs);
+      onSelectionChange?.(newConfigs);
+      setSelectedPreset(value);
+    } else if (value === "none") {
+      // Restore previous configs or clear
+      setToothConfigs(previousConfigs);
+      onSelectionChange?.(previousConfigs);
+      setSelectedPreset(value);
+    }
+  };
 
   // Full dental arch order for range selection
   const upperArch = [...upperRight, ...upperLeft];
@@ -272,10 +317,24 @@ export function ToothSelection({ onSelectionChange }: ToothSelectionProps) {
     <>
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-3">
-            <Smile className="text-burgundy-500" size={20} />
-            Seleção de Dentes
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-3">
+              <Smile className="text-burgundy-500" size={20} />
+              Seleção de Dentes
+            </CardTitle>
+            <Select value={selectedPreset} onValueChange={handlePresetChange}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Selecione um preset" />
+              </SelectTrigger>
+              <SelectContent>
+                {presetOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-3">
