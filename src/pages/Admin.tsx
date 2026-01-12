@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { FileText, LogOut, Eye, Filter, CheckCircle, RefreshCw, StickyNote, Undo2 } from "lucide-react";
+import { FileText, LogOut, Eye, Filter, CheckCircle, RefreshCw, StickyNote, Undo2, BarChart3 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -14,6 +14,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Trash2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { recordStatusChange, getLastStatusChange } from "@/hooks/useOrderStatusTracking";
 
 const ImageWithSignedUrl = ({ filePath }: { filePath: string }) => {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
@@ -271,13 +272,32 @@ export default function Admin() {
   };
 
   const handleStatusChange = async (orderId: string, newStatus: string) => {
+    if (!session?.user?.id) return;
+
     try {
+      // Get current order status
+      const currentOrder = orders.find(o => o.id === orderId);
+      const oldStatus = currentOrder?.status || null;
+
+      // Get last status change to calculate duration
+      const lastChange = await getLastStatusChange(orderId);
+
+      // Update order status
       const { error } = await supabase
         .from('orders')
         .update({ status: newStatus })
         .eq('id', orderId);
 
       if (error) throw error;
+
+      // Record status change in history
+      await recordStatusChange({
+        orderId,
+        oldStatus,
+        newStatus,
+        userId: session.user.id,
+        previousChangedAt: lastChange?.changed_at,
+      });
 
       toast({
         title: "Status atualizado",
@@ -373,6 +393,10 @@ export default function Admin() {
     }
 
     try {
+      // Get current order status
+      const currentOrder = orders.find(o => o.id === orderId);
+      const oldStatus = currentOrder?.status || 'pending';
+
       const { error } = await supabase
         .from('orders')
         .update({ 
@@ -382,6 +406,14 @@ export default function Admin() {
         .eq('id', orderId);
 
       if (error) throw error;
+
+      // Record status change in history
+      await recordStatusChange({
+        orderId,
+        oldStatus,
+        newStatus: 'in-progress',
+        userId: session.user.id,
+      });
 
       // Recarrega os dados para atualizar a tabela
       fetchOrders();
@@ -401,7 +433,16 @@ export default function Admin() {
   };
 
   const handleUnacceptOrder = async (orderId: string) => {
+    if (!session?.user?.id) return;
+
     try {
+      // Get current order status
+      const currentOrder = orders.find(o => o.id === orderId);
+      const oldStatus = currentOrder?.status || 'in-progress';
+
+      // Get last status change to calculate duration
+      const lastChange = await getLastStatusChange(orderId);
+
       const { error } = await supabase
         .from('orders')
         .update({ 
@@ -411,6 +452,15 @@ export default function Admin() {
         .eq('id', orderId);
 
       if (error) throw error;
+
+      // Record status change in history
+      await recordStatusChange({
+        orderId,
+        oldStatus,
+        newStatus: 'pending',
+        userId: session.user.id,
+        previousChangedAt: lastChange?.changed_at,
+      });
 
       fetchOrders();
 
@@ -562,6 +612,10 @@ export default function Admin() {
               <h1 className="text-2xl font-bold text-gray-900">Painel Administrativo</h1>
             </div>
             <div className="flex items-center gap-2">
+              <Button variant="outline" onClick={() => navigate("/analytics")}>
+                <BarChart3 className="mr-2 w-4 h-4" />
+                Analytics
+              </Button>
               <Button variant="default" onClick={() => navigate("/producao")}>
                 Visualização da Produção
               </Button>

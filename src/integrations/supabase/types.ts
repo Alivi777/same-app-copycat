@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      order_status_history: {
+        Row: {
+          changed_at: string
+          changed_by: string
+          duration_seconds: number | null
+          id: string
+          new_status: string
+          old_status: string | null
+          order_id: string
+        }
+        Insert: {
+          changed_at?: string
+          changed_by: string
+          duration_seconds?: number | null
+          id?: string
+          new_status: string
+          old_status?: string | null
+          order_id: string
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string
+          duration_seconds?: number | null
+          id?: string
+          new_status?: string
+          old_status?: string | null
+          order_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_status_history_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orders: {
         Row: {
           additional_notes: string | null
