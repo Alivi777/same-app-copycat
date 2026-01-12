@@ -4,15 +4,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { BarChart3, PieChart, LogOut, ArrowLeft, Clock, TrendingUp, CheckCircle, Users, Calendar } from "lucide-react";
+import { BarChart3, PieChart, LogOut, ArrowLeft, Clock, TrendingUp, CheckCircle, Users, Calendar as CalendarIcon, CalendarRange } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { Session } from "@supabase/supabase-js";
 import { formatDuration } from "@/hooks/useOrderStatusTracking";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, PieChart as RechartsPieChart, Pie, Cell, Legend, Tooltip } from "recharts";
-import { format, subDays, subWeeks, subMonths, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval } from "date-fns";
+import { format, subDays, subWeeks, subMonths, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { DateRange } from "react-day-picker";
 
 interface StatusHistoryEntry {
   id: string;
@@ -41,7 +44,7 @@ interface UserPerformance {
   totalTimeSeconds: number;
 }
 
-type PeriodFilter = 'daily' | 'weekly' | 'monthly';
+type PeriodFilter = 'daily' | 'weekly' | 'monthly' | 'custom';
 
 const COLORS = ['hsl(var(--primary))', 'hsl(217, 91%, 60%)', 'hsl(142, 71%, 45%)', 'hsl(45, 93%, 47%)', 'hsl(280, 65%, 60%)', 'hsl(340, 82%, 52%)'];
 
@@ -78,6 +81,11 @@ export default function Analytics() {
   const [statusHistory, setStatusHistory] = useState<StatusHistoryEntry[]>([]);
   const [profiles, setProfiles] = useState<any[]>([]);
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('weekly');
+  const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>({
+    from: subDays(new Date(), 30),
+    to: new Date(),
+  });
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -156,6 +164,41 @@ export default function Analytics() {
   // Get date range based on period filter
   const getDateRange = useMemo(() => {
     const now = new Date();
+    
+    if (periodFilter === 'custom' && customDateRange?.from && customDateRange?.to) {
+      const daysDiff = differenceInDays(customDateRange.to, customDateRange.from);
+      
+      // Choose interval type based on date range span
+      if (daysDiff <= 14) {
+        // Daily intervals for ranges up to 2 weeks
+        return {
+          start: customDateRange.from,
+          end: customDateRange.to,
+          intervals: eachDayOfInterval({ start: customDateRange.from, end: customDateRange.to }),
+          formatLabel: (date: Date) => format(date, 'dd/MM', { locale: ptBR }),
+          formatKey: (date: Date) => format(date, 'yyyy-MM-dd'),
+        };
+      } else if (daysDiff <= 90) {
+        // Weekly intervals for ranges up to 3 months
+        return {
+          start: customDateRange.from,
+          end: customDateRange.to,
+          intervals: eachWeekOfInterval({ start: customDateRange.from, end: customDateRange.to }, { locale: ptBR }),
+          formatLabel: (date: Date) => `Sem ${format(date, 'dd/MM', { locale: ptBR })}`,
+          formatKey: (date: Date) => format(startOfWeek(date, { locale: ptBR }), 'yyyy-MM-dd'),
+        };
+      } else {
+        // Monthly intervals for longer ranges
+        return {
+          start: customDateRange.from,
+          end: customDateRange.to,
+          intervals: eachMonthOfInterval({ start: customDateRange.from, end: customDateRange.to }),
+          formatLabel: (date: Date) => format(date, 'MMM/yy', { locale: ptBR }),
+          formatKey: (date: Date) => format(startOfMonth(date), 'yyyy-MM'),
+        };
+      }
+    }
+    
     switch (periodFilter) {
       case 'daily':
         return {
@@ -174,6 +217,7 @@ export default function Analytics() {
           formatKey: (date: Date) => format(startOfWeek(date, { locale: ptBR }), 'yyyy-MM-dd'),
         };
       case 'monthly':
+      default:
         return {
           start: subMonths(now, 5),
           end: now,
@@ -182,7 +226,7 @@ export default function Analytics() {
           formatKey: (date: Date) => format(startOfMonth(date), 'yyyy-MM'),
         };
     }
-  }, [periodFilter]);
+  }, [periodFilter, customDateRange]);
 
   // Process chart data based on period filter
   const processedData = useMemo(() => {
@@ -308,10 +352,22 @@ export default function Analytics() {
   };
 
   const getPeriodLabel = () => {
+    if (periodFilter === 'custom' && customDateRange?.from && customDateRange?.to) {
+      return `${format(customDateRange.from, 'dd/MM/yyyy', { locale: ptBR })} - ${format(customDateRange.to, 'dd/MM/yyyy', { locale: ptBR })}`;
+    }
     switch (periodFilter) {
       case 'daily': return 'Últimos 7 dias';
       case 'weekly': return 'Últimas 4 semanas';
       case 'monthly': return 'Últimos 6 meses';
+      default: return '';
+    }
+  };
+
+  const handleDateRangeSelect = (range: DateRange | undefined) => {
+    setCustomDateRange(range);
+    if (range?.from && range?.to) {
+      setPeriodFilter('custom');
+      setIsCalendarOpen(false);
     }
   };
 
@@ -357,27 +413,64 @@ export default function Analytics() {
             {/* Period Filter */}
             <Card>
               <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <div className="flex items-center gap-2">
-                    <Calendar className="h-5 w-5 text-muted-foreground" />
+                    <CalendarIcon className="h-5 w-5 text-muted-foreground" />
                     <span className="text-sm font-medium">Período de análise:</span>
                   </div>
-                  <ToggleGroup 
-                    type="single" 
-                    value={periodFilter} 
-                    onValueChange={(value) => value && setPeriodFilter(value as PeriodFilter)}
-                    className="gap-1"
-                  >
-                    <ToggleGroupItem value="daily" aria-label="Diário" className="px-4">
-                      Diário
-                    </ToggleGroupItem>
-                    <ToggleGroupItem value="weekly" aria-label="Semanal" className="px-4">
-                      Semanal
-                    </ToggleGroupItem>
-                    <ToggleGroupItem value="monthly" aria-label="Mensal" className="px-4">
-                      Mensal
-                    </ToggleGroupItem>
-                  </ToggleGroup>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <ToggleGroup 
+                      type="single" 
+                      value={periodFilter} 
+                      onValueChange={(value) => value && setPeriodFilter(value as PeriodFilter)}
+                      className="gap-1"
+                    >
+                      <ToggleGroupItem value="daily" aria-label="Diário" className="px-4">
+                        Diário
+                      </ToggleGroupItem>
+                      <ToggleGroupItem value="weekly" aria-label="Semanal" className="px-4">
+                        Semanal
+                      </ToggleGroupItem>
+                      <ToggleGroupItem value="monthly" aria-label="Mensal" className="px-4">
+                        Mensal
+                      </ToggleGroupItem>
+                    </ToggleGroup>
+                    
+                    <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant={periodFilter === 'custom' ? 'default' : 'outline'}
+                          className="gap-2"
+                        >
+                          <CalendarRange className="h-4 w-4" />
+                          {periodFilter === 'custom' && customDateRange?.from && customDateRange?.to ? (
+                            <span className="hidden sm:inline">
+                              {format(customDateRange.from, 'dd/MM', { locale: ptBR })} - {format(customDateRange.to, 'dd/MM', { locale: ptBR })}
+                            </span>
+                          ) : (
+                            <span className="hidden sm:inline">Personalizado</span>
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="end">
+                        <Calendar
+                          initialFocus
+                          mode="range"
+                          defaultMonth={customDateRange?.from}
+                          selected={customDateRange}
+                          onSelect={handleDateRangeSelect}
+                          numberOfMonths={2}
+                          locale={ptBR}
+                          disabled={{ after: new Date() }}
+                        />
+                        <div className="p-3 border-t">
+                          <p className="text-xs text-muted-foreground text-center">
+                            Selecione o período inicial e final
+                          </p>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
                 </div>
               </CardContent>
             </Card>
