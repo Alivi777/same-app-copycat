@@ -51,6 +51,23 @@ const USER_COLORS: Record<string, string> = {
   'Henrique': 'hsl(35, 92%, 40%)',
 };
 
+const getStatusLabel = (status: string): string => {
+  const labels: Record<string, string> = {
+    pending: "Pendente",
+    "in-progress": "Em Andamento",
+    completed: "Concluído",
+    projetando: "Projetando",
+    projetado: "Projetado",
+    "fresado-provisorio": "Fresado Provisório",
+    "fresado-definitivo": "Fresado Definitivo",
+    maquiagem: "Maquiagem",
+    "entregue-provisorio": "Entregue Provisório",
+    vazado: "Vazado",
+    pureto: "Pureto",
+  };
+  return labels[status] || status;
+};
+
 export default function Analytics() {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -284,22 +301,6 @@ export default function Analytics() {
     };
   }, [orders, statusHistory, profiles, getDateRange]);
 
-  const getStatusLabel = (status: string): string => {
-    const labels: Record<string, string> = {
-      pending: "Pendente",
-      "in-progress": "Em Andamento",
-      completed: "Concluído",
-      projetando: "Projetando",
-      projetado: "Projetado",
-      "fresado-provisorio": "Fresado Provisório",
-      "fresado-definitivo": "Fresado Definitivo",
-      maquiagem: "Maquiagem",
-      "entregue-provisorio": "Entregue Provisório",
-      vazado: "Vazado",
-      pureto: "Pureto",
-    };
-    return labels[status] || status;
-  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
