@@ -15,6 +15,7 @@ import { Trash2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { recordStatusChange, getLastStatusChange } from "@/hooks/useOrderStatusTracking";
+import { OrderDetailsDialog } from "@/components/admin/OrderDetailsDialog";
 
 const ImageWithSignedUrl = ({ filePath }: { filePath: string }) => {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
@@ -847,164 +848,20 @@ export default function Admin() {
                               Pedido
                             </Button>
                           </DialogTrigger>
-                            <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
-                              <DialogHeader>
-                                <DialogTitle>Detalhes - OS {order.order_number}</DialogTitle>
-                              </DialogHeader>
-                              <div className="space-y-6">
-                                {/* Informações da Clínica */}
-                                <div>
-                                  <h3 className="font-semibold mb-3 text-lg">Informações da Clínica</h3>
-                                  <div className="bg-muted p-4 rounded-lg space-y-2">
-                                    {order.clinic_name && (
-                                      <div className="flex gap-2">
-                                        <span className="font-medium">Clínica:</span>
-                                        <span>{order.clinic_name}</span>
-                                      </div>
-                                    )}
-                                    {order.email && (
-                                      <div className="flex gap-2">
-                                        <span className="font-medium">Email:</span>
-                                        <span>{order.email}</span>
-                                      </div>
-                                    )}
-                                    {order.phone && (
-                                      <div className="flex gap-2">
-                                        <span className="font-medium">Telefone:</span>
-                                        <span>{order.phone}</span>
-                                      </div>
-                                    )}
-                                    {order.address && (
-                                      <div className="flex gap-2">
-                                        <span className="font-medium">Endereço:</span>
-                                        <span>{order.address}</span>
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-
-                                {/* Informações do Pedido */}
-                                <div>
-                                  <h3 className="font-semibold mb-3 text-lg">Informações do Pedido</h3>
-                                  <div className="bg-muted p-4 rounded-lg space-y-2">
-                                    <div className="flex gap-2">
-                                      <span className="font-medium">Paciente:</span>
-                                      <span>{order.patient_name}</span>
-                                    </div>
-                                    {order.patient_id && (
-                                      <div className="flex gap-2">
-                                        <span className="font-medium">ID do Paciente:</span>
-                                        <span>{order.patient_id}</span>
-                                      </div>
-                                    )}
-                                    <div className="flex gap-2">
-                                      <span className="font-medium">Dentista:</span>
-                                      <span>{order.dentist_name}</span>
-                                    </div>
-                                    <div className="flex gap-2">
-                                      <span className="font-medium">Data:</span>
-                                      <span>{new Date(order.date).toLocaleDateString("pt-BR")}</span>
-                                    </div>
-                                    <div className="flex gap-2">
-                                      <span className="font-medium">Dentes:</span>
-                                      <span>{order.selected_teeth?.join(', ') || '-'}</span>
-                                    </div>
-                                    <div className="flex gap-2">
-                                      <span className="font-medium">Status:</span>
-                                      {getStatusBadge(order.status)}
-                                    </div>
-                                  </div>
-                                </div>
-
-                                {/* Configurações Técnicas */}
-                                <div>
-                                  <h3 className="font-semibold mb-3 text-lg">Configurações Técnicas</h3>
-                                  <div className="bg-muted p-4 rounded-lg space-y-2">
-                                    <div className="flex gap-2">
-                                      <span className="font-medium">Material:</span>
-                                      <span>{order.material || '-'}</span>
-                                    </div>
-                                    <div className="flex gap-2">
-                                      <span className="font-medium">Tipo de Prótese:</span>
-                                      <span>{order.prosthesis_type || '-'}</span>
-                                    </div>
-                                    <div className="flex gap-2">
-                                      <span className="font-medium">Cor / Tonalidade:</span>
-                                      <span>{order.color || '-'}</span>
-                                    </div>
-                                    <div className="flex gap-2 items-center">
-                                      <span className="font-medium">Prazo de Entrega:</span>
-                                      <Input 
-                                        type="date"
-                                        value={order.delivery_deadline || ''}
-                                        onChange={(e) => handleDeliveryDeadlineChange(order.id, e.target.value)}
-                                        className="w-auto"
-                                      />
-                                    </div>
-                                  </div>
-                                </div>
-
-                                {/* Arquivos */}
-                                {(order.smile_photo_url || order.scan_file_url) && (
-                                  <div>
-                                    <h3 className="font-semibold mb-3 text-lg">Arquivos</h3>
-                                    <div className="space-y-4">
-                                      {order.smile_photo_url && (
-                                        <div>
-                                          <h4 className="font-medium mb-2">Foto do Sorriso</h4>
-                                          <ImageWithSignedUrl filePath={order.smile_photo_url} />
-                                        </div>
-                                      )}
-                                      {order.scan_file_url && (
-                                        <div>
-                                          <h4 className="font-medium mb-2">Arquivo de Scan</h4>
-                                          <FileLink filePath={order.scan_file_url} />
-                                        </div>
-                                      )}
-                                    </div>
-                                  </div>
-                                )}
-
-                                 {/* Observações */}
-                                 {order.additional_notes && (
-                                   <div>
-                                     <h3 className="font-semibold mb-3 text-lg">Observações da Clínica</h3>
-                                     <div className="bg-muted p-4 rounded-lg">
-                                       <p className="text-sm whitespace-pre-wrap">{order.additional_notes}</p>
-                                     </div>
-                                   </div>
-                                 )}
-
-                                 {/* Botão Aceitar / Desfazer */}
-                                 <div className="flex justify-between items-center pt-4 border-t">
-                                   {order.assigned_to ? (
-                                     <>
-                                       <div className="text-sm text-muted-foreground">
-                                         Atribuído a: <span className="font-medium">{order.assigned_user?.username || 'Usuário'}</span>
-                                       </div>
-                                       <Button 
-                                         onClick={() => handleUnacceptOrder(order.id)}
-                                         variant="outline"
-                                         className="text-orange-600 border-orange-600 hover:bg-orange-50"
-                                       >
-                                         <Undo2 className="mr-2 h-4 w-4" />
-                                         Desfazer Aceitação
-                                       </Button>
-                                     </>
-                                   ) : (
-                                     <div className="ml-auto">
-                                       <Button 
-                                         onClick={() => handleAcceptOrder(order.id)}
-                                         className="bg-success text-success-foreground hover:bg-success/90"
-                                       >
-                                         Aceitar Ordem
-                                       </Button>
-                                     </div>
-                                   )}
-                                 </div>
-                               </div>
-                             </DialogContent>
-                            </Dialog>
+                          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+                            <OrderDetailsDialog
+                              order={order}
+                              getStatusBadge={getStatusBadge}
+                              handleDeliveryDeadlineChange={handleDeliveryDeadlineChange}
+                              handleAcceptOrder={handleAcceptOrder}
+                              handleUnacceptOrder={handleUnacceptOrder}
+                              ImageWithSignedUrl={ImageWithSignedUrl}
+                              FileLink={FileLink}
+                              onUpdate={fetchOrders}
+                              toast={toast}
+                            />
+                          </DialogContent>
+                        </Dialog>
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
