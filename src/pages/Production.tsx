@@ -3,51 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Package, Edit3, Check, Plus, Trash2, RotateCcw } from "lucide-react";
+import { ArrowLeft, Edit3, Check, Plus, RotateCcw, Package, Maximize2, Minimize2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Input } from "@/components/ui/input";
-import { Rnd } from "react-rnd";
 import type { Session } from "@supabase/supabase-js";
-import { CyberpunkBackground } from "@/components/production/CyberpunkBackground";
-import { AnimatedPerson3D } from "@/components/production/AnimatedPerson3D";
-import { NeonControlPanel } from "@/components/production/NeonControlPanel";
-import { ComputerWorkstation } from "@/components/production/ComputerWorkstation";
-
-// User colors mapping - neon style
-const USER_COLORS: Record<string, { bg: string; glow: string; text: string; hex: string }> = {
-  carneiro: { bg: "bg-cyan-400", glow: "shadow-cyan-400/50", text: "text-cyan-400", hex: "#22d3ee" },
-  alexandre: { bg: "bg-fuchsia-500", glow: "shadow-fuchsia-500/50", text: "text-fuchsia-500", hex: "#d946ef" },
-  henrique: { bg: "bg-amber-400", glow: "shadow-amber-400/50", text: "text-amber-400", hex: "#f59e0b" },
-};
-
-const PRESET_COLORS = [
-  "#22d3ee", "#d946ef", "#f59e0b", "#10b981", "#ef4444", "#3b82f6", "#ec4899", "#84cc16"
-];
-
-const getUserColor = (username: string | null | undefined) => {
-  if (!username) return { bg: "bg-gray-400", glow: "shadow-gray-400/50", hex: "#9ca3af" };
-  const normalizedName = username.toLowerCase();
-  return USER_COLORS[normalizedName] || { bg: "bg-gray-400", glow: "shadow-gray-400/50", hex: "#9ca3af" };
-};
-
-// Status to station mapping
-const getStation = (status: string): string => {
-  switch (status) {
-    case "pending": return "espera";
-    case "in-progress":
-    case "projetando": return "projeto";
-    case "projetado": return "fresadora";
-    case "fresado-definitivo":
-    case "maquiagem": return "maquiagem";
-    case "fresado-provisorio": return "saida";
-    case "vazado": return "vazado";
-    case "pureto": return "pureto";
-    case "completed":
-    case "entregue-provisorio": return "saida";
-    default: return "espera";
-  }
-};
+import { Production3DScene } from "@/components/production/Production3DScene";
+import { ProductionSidebar } from "@/components/production/ProductionSidebar";
 
 interface Order {
   id: string;
@@ -71,27 +32,16 @@ interface StationConfig {
   stationType: string;
 }
 
-interface OrderChipProps {
-  order: Order;
-  index: number;
-  isEditMode?: boolean;
-}
+const USER_COLORS: Record<string, { hex: string }> = {
+  carneiro: { hex: "#22d3ee" },
+  alexandre: { hex: "#d946ef" },
+  henrique: { hex: "#f59e0b" },
+};
 
-const OrderChip = ({ order, index, isEditMode }: OrderChipProps) => {
-  const username = order.assigned_user?.username;
-  const { bg, glow, hex } = getUserColor(username);
-  
-  return (
-    <div 
-      className={`w-7 h-7 rounded-full ${bg} flex items-center justify-center text-slate-900 text-[10px] font-bold cursor-pointer hover:scale-125 transition-all duration-300 border-2 border-white/40 ${isEditMode ? 'pointer-events-none' : ''}`}
-      style={{
-        boxShadow: `0 0 15px ${hex}, 0 0 30px ${hex}40`,
-      }}
-      title={`#${index + 1} - ${order.patient_name}\nOS: ${order.order_number}\nResponsável: ${username || 'Não atribuído'}`}
-    >
-      {index + 1}
-    </div>
-  );
+const getUserColor = (username: string | null | undefined) => {
+  if (!username) return "#9ca3af";
+  const normalizedName = username.toLowerCase();
+  return USER_COLORS[normalizedName]?.hex || "#9ca3af";
 };
 
 const DEFAULT_STATIONS: StationConfig[] = [
@@ -113,8 +63,14 @@ export default function Production() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [exitDialogOpen, setExitDialogOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [selectedStation, setSelectedStation] = useState<string | null>(null);
+  const [selectedStation, setSelectedStation] = useState<StationConfig | null>(null);
   const [selectedPerson, setSelectedPerson] = useState<string | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const handleSelectOrder = (order: Order | null) => {
+    setSelectedOrder(order);
+  };
   
   const [stations, setStations] = useState<StationConfig[]>(() => {
     const saved = localStorage.getItem('production-stations-v2');
@@ -207,34 +163,21 @@ export default function Production() {
     setStations([...stations, newStation]);
   };
 
-  const handleDeleteStation = (id: string) => {
-    setStations(stations.filter(s => s.id !== id));
-    setSelectedStation(null);
+  const handleDeleteStation = () => {
+    if (selectedStation) {
+      setStations(stations.filter(s => s.id !== selectedStation.id));
+      setSelectedStation(null);
+    }
   };
 
-  const handleStationUpdate = (id: string, updates: Partial<StationConfig>) => {
-    setStations(stations.map(s => s.id === id ? { ...s, ...updates } : s));
+  const handleStationUpdate = (updates: Partial<StationConfig>) => {
+    if (selectedStation) {
+      setStations(stations.map(s => s.id === selectedStation.id ? { ...s, ...updates } : s));
+      setSelectedStation({ ...selectedStation, ...updates });
+    }
   };
 
-  const indexedOrders = orders.map((order, index) => ({ order, index }));
-  
-  const getOrdersByStation = (stationType: string) => {
-    return indexedOrders.filter(({ order }) => getStation(order.status) === stationType);
-  };
-
-  const getOrdersByUser = (username: string) => {
-    return indexedOrders.filter(({ order }) => {
-      const station = getStation(order.status);
-      const assignedUsername = order.assigned_user?.username?.toLowerCase();
-      return station === "projeto" && assignedUsername === username.toLowerCase();
-    });
-  };
-
-  const activeOrders = indexedOrders.filter(({ order }) => 
-    !['completed', 'entregue-provisorio', 'fresado-provisorio'].includes(order.status)
-  );
-
-  const completedOrders = indexedOrders.filter(({ order }) => 
+  const completedOrders = orders.filter(order => 
     ['completed', 'entregue-provisorio', 'fresado-provisorio'].includes(order.status)
   );
 
@@ -252,16 +195,13 @@ export default function Production() {
   }
 
   return (
-    <div className="h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 p-4 flex flex-col overflow-hidden relative">
-      {/* Animated Cyberpunk Background */}
-      <CyberpunkBackground />
-
-      {/* Gradient overlays */}
+    <div className="h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 flex flex-col overflow-hidden relative">
+      {/* Animated background gradient */}
       <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-slate-950/40 pointer-events-none" />
       <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-transparent to-fuchsia-500/5 pointer-events-none" />
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-4 flex-shrink-0 relative z-10">
+      <div className="flex items-center justify-between p-4 flex-shrink-0 relative z-10 border-b border-cyan-500/20">
         <Button 
           variant="ghost" 
           size="sm" 
@@ -273,11 +213,19 @@ export default function Production() {
           Voltar
         </Button>
         
-        <h1 className="text-xl font-bold bg-gradient-to-r from-cyan-400 via-fuchsia-500 to-amber-400 bg-clip-text text-transparent animate-pulse">
-          PRODUÇÃO
+        <h1 className="text-xl font-bold bg-gradient-to-r from-cyan-400 via-fuchsia-500 to-amber-400 bg-clip-text text-transparent">
+          PRODUÇÃO 3D
         </h1>
         
         <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsFullscreen(!isFullscreen)}
+            className="text-cyan-400 border-cyan-500/50 hover:bg-cyan-400/20 backdrop-blur-sm"
+          >
+            {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+          </Button>
           {isEditMode && (
             <>
               <Button 
@@ -310,286 +258,64 @@ export default function Production() {
           >
             {isEditMode ? <><Check className="h-4 w-4 mr-1" /> Salvar</> : <><Edit3 className="h-4 w-4 mr-1" /> Editar</>}
           </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setExitDialogOpen(true)}
+            className="text-emerald-400 border-emerald-500/50 hover:bg-emerald-400/20 backdrop-blur-sm"
+          >
+            <Package className="h-4 w-4 mr-1" />
+            Finalizados ({completedOrders.length})
+          </Button>
         </div>
       </div>
 
-      <div className="flex gap-4 flex-1 min-h-0 relative z-10">
+      {/* Main Content */}
+      <div className="flex-1 flex min-h-0 relative z-10">
         {/* Left Sidebar */}
-        <div className="w-52 flex-shrink-0 space-y-3 flex flex-col">
-          {/* User Legend with 3D Avatars */}
-          <NeonControlPanel title="Equipe" color="#22d3ee" isEditMode={isEditMode}>
-            <div className="flex justify-around py-2">
-              {Object.entries(USER_COLORS).map(([key, colors]) => (
-                <div key={key} className="flex flex-col items-center gap-1">
-                  {isEditMode ? (
-                    <>
-                      <div 
-                        className="w-8 h-8 rounded-full flex items-center justify-center"
-                        style={{ backgroundColor: `${colors.hex}30`, border: `2px solid ${colors.hex}` }}
-                      >
-                        <span className="text-xs font-bold" style={{ color: colors.hex }}>
-                          {userNames[key]?.charAt(0) || key.charAt(0).toUpperCase()}
-                        </span>
-                      </div>
-                      <Input 
-                        value={userNames[key]} 
-                        onChange={(e) => setUserNames({...userNames, [key]: e.target.value})} 
-                        className="text-[10px] bg-slate-800/50 border-cyan-500/30 h-5 px-1 w-16 text-center"
-                        style={{ color: colors.hex }}
-                      />
-                    </>
-                  ) : (
-                    <AnimatedPerson3D
-                      name={userNames[key]}
-                      color={colors.text}
-                      colorHex={colors.hex}
-                      isSelected={selectedPerson === key}
-                      onClick={() => setSelectedPerson(selectedPerson === key ? null : key)}
-                      orderCount={getOrdersByUser(key).length}
-                    />
-                  )}
-                </div>
-              ))}
-            </div>
-          </NeonControlPanel>
+        {!isFullscreen && (
+          <ProductionSidebar
+            orders={orders}
+            selectedPerson={selectedPerson}
+            onSelectPerson={setSelectedPerson}
+            selectedOrder={selectedOrder}
+            onSelectOrder={handleSelectOrder}
+            userNames={userNames}
+            setUserNames={setUserNames}
+            isEditMode={isEditMode}
+            selectedStation={selectedStation}
+            onUpdateStation={handleStationUpdate}
+            onDeleteStation={handleDeleteStation}
+          />
+        )}
 
-          {/* Orders List */}
-          <NeonControlPanel title="Fila de Pedidos" color="#f59e0b">
-            <ScrollArea className="h-40">
-              <div className="space-y-1">
-                {activeOrders.length === 0 ? (
-                  <div className="text-amber-400/50 text-xs text-center py-4">
-                    Nenhum pedido ativo
-                  </div>
-                ) : (
-                  activeOrders.map(({ order, index }) => {
-                    const { hex } = getUserColor(order.assigned_user?.username);
-                    return (
-                      <div 
-                        key={order.id} 
-                        className="flex items-center gap-2 p-1.5 rounded-md transition-all hover:bg-white/5"
-                        style={{ borderLeft: `3px solid ${hex}` }}
-                      >
-                        <div 
-                          className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold"
-                          style={{ 
-                            backgroundColor: `${hex}30`,
-                            color: hex,
-                            boxShadow: `0 0 8px ${hex}40`
-                          }}
-                        >
-                          {index + 1}
-                        </div>
-                        <span className="text-[10px] text-cyan-100/80 truncate flex-1">
-                          {order.patient_name}
-                        </span>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </ScrollArea>
-          </NeonControlPanel>
-
-          {/* Edit Panel */}
-          {isEditMode && selectedStation && (
-            <NeonControlPanel title="Editar Estação" color="#d946ef">
-              <div className="space-y-2">
-                <Input
-                  value={stations.find(s => s.id === selectedStation)?.title || ''}
-                  onChange={(e) => handleStationUpdate(selectedStation, { title: e.target.value })}
-                  placeholder="Título"
-                  className="h-7 text-xs bg-slate-800/50 border-fuchsia-500/30 text-fuchsia-100"
-                />
-                <div className="flex gap-1.5 flex-wrap">
-                  {PRESET_COLORS.map(color => (
-                    <button
-                      key={color}
-                      className={`w-6 h-6 rounded-md transition-all hover:scale-110 ${
-                        stations.find(s => s.id === selectedStation)?.color === color 
-                          ? 'ring-2 ring-white scale-110' 
-                          : ''
-                      }`}
-                      style={{ 
-                        backgroundColor: color,
-                        boxShadow: `0 0 10px ${color}60`
-                      }}
-                      onClick={() => handleStationUpdate(selectedStation, { color })}
-                    />
-                  ))}
-                </div>
-                <Button 
-                  variant="destructive" 
-                  size="sm" 
-                  className="w-full h-7 text-xs bg-red-500/20 border border-red-500/50 text-red-400 hover:bg-red-500/30" 
-                  onClick={() => handleDeleteStation(selectedStation)}
-                >
-                  <Trash2 className="h-3 w-3 mr-1" /> Excluir Estação
-                </Button>
-              </div>
-            </NeonControlPanel>
-          )}
-
-          {/* Selected Person Info */}
-          {selectedPerson && !isEditMode && (
-            <NeonControlPanel title={`${userNames[selectedPerson]} - Detalhes`} color={USER_COLORS[selectedPerson]?.hex || "#22d3ee"}>
-              <div className="space-y-2">
-                <div className="text-xs text-cyan-100/70">
-                  Pedidos ativos: <span className="font-bold text-white">{getOrdersByUser(selectedPerson).length}</span>
-                </div>
-                <div className="space-y-1">
-                  {getOrdersByUser(selectedPerson).slice(0, 3).map(({ order, index }) => (
-                    <div key={order.id} className="text-[10px] text-cyan-100/60 truncate">
-                      #{index + 1} - {order.patient_name}
-                    </div>
-                  ))}
-                  {getOrdersByUser(selectedPerson).length > 3 && (
-                    <div className="text-[10px] text-cyan-400">
-                      +{getOrdersByUser(selectedPerson).length - 3} mais...
-                    </div>
-                  )}
-                </div>
-              </div>
-            </NeonControlPanel>
-          )}
-        </div>
-
-        {/* Main Floor Plan */}
-        <div className="flex-1 min-h-0">
+        {/* 3D Scene */}
+        <div className="flex-1 relative">
           <div 
-            className="relative h-full rounded-xl overflow-hidden backdrop-blur-sm"
+            className="absolute inset-2 rounded-xl overflow-hidden"
             style={{
-              background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.6) 100%)',
               border: '2px solid rgba(34, 211, 238, 0.3)',
               boxShadow: '0 0 40px rgba(34, 211, 238, 0.1), inset 0 0 60px rgba(34, 211, 238, 0.05)',
             }}
           >
-            {/* Grid overlay */}
-            <div 
-              className="absolute inset-0 opacity-10 pointer-events-none"
-              style={{
-                backgroundImage: 'linear-gradient(rgba(34, 211, 238, 0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(34, 211, 238, 0.3) 1px, transparent 1px)',
-                backgroundSize: '40px 40px',
-              }}
+            <Production3DScene
+              orders={orders}
+              selectedPerson={selectedPerson}
+              onSelectPerson={setSelectedPerson}
+              onSelectOrder={handleSelectOrder}
+              userNames={userNames}
             />
-            
-            <div className="relative w-full h-full p-3">
-              {stations.map((station) => (
-                <Rnd
-                  key={station.id}
-                  size={{ width: station.width, height: station.height }}
-                  position={{ x: station.x, y: station.y }}
-                  onDragStop={(e, d) => isEditMode && handleStationUpdate(station.id, { x: d.x, y: d.y })}
-                  onResizeStop={(e, direction, ref, delta, position) => {
-                    if (isEditMode) {
-                      handleStationUpdate(station.id, {
-                        width: parseInt(ref.style.width),
-                        height: parseInt(ref.style.height),
-                        x: position.x,
-                        y: position.y
-                      });
-                    }
-                  }}
-                  disableDragging={!isEditMode}
-                  enableResizing={isEditMode}
-                  bounds="parent"
-                  onClick={() => isEditMode && setSelectedStation(station.id)}
-                  className={`${isEditMode ? 'cursor-move' : ''}`}
-                >
-                  <div 
-                    className={`w-full h-full rounded-xl backdrop-blur-md flex flex-col overflow-hidden transition-all duration-300 ${
-                      selectedStation === station.id ? 'ring-2 ring-white' : ''
-                    } ${isEditMode ? 'hover:ring-2 hover:ring-white/50' : ''}`}
-                    style={{ 
-                      border: `2px solid ${station.color}60`,
-                      background: `linear-gradient(135deg, ${station.color}15 0%, ${station.color}05 100%)`,
-                      boxShadow: `0 0 30px ${station.color}20, inset 0 1px 0 ${station.color}30`,
-                    }}
-                    onClick={(e) => {
-                      if (!isEditMode && station.stationType === 'saida') {
-                        setExitDialogOpen(true);
-                      }
-                    }}
-                  >
-                    {/* Station Header */}
-                    <div 
-                      className="text-center py-2 border-b flex items-center justify-center gap-2"
-                      style={{ 
-                        borderColor: `${station.color}30`,
-                        background: `linear-gradient(90deg, transparent, ${station.color}10, transparent)`,
-                      }}
-                    >
-                      <div 
-                        className="w-2 h-2 rounded-full animate-pulse"
-                        style={{ backgroundColor: station.color, boxShadow: `0 0 8px ${station.color}` }}
-                      />
-                      <span 
-                        className="text-xs font-bold uppercase tracking-wider"
-                        style={{ color: station.color, textShadow: `0 0 10px ${station.color}50` }}
-                      >
-                        {station.title}
-                      </span>
-                      {!isEditMode && station.stationType === 'saida' && completedOrders.length > 0 && (
-                        <span 
-                          className="text-[10px] px-2 py-0.5 rounded-full font-bold"
-                          style={{ 
-                            backgroundColor: `${station.color}30`,
-                            color: station.color,
-                            boxShadow: `0 0 10px ${station.color}40`
-                          }}
-                        >
-                          {completedOrders.length}
-                        </span>
-                      )}
-                    </div>
-                    
-                    {/* Station Content */}
-                    <div className="flex-1 flex items-center justify-center gap-2 flex-wrap p-3 overflow-hidden">
-                      {station.stationType === 'projeto' ? (
-                        <div className="flex gap-8 justify-center w-full items-end">
-                          {Object.entries(USER_COLORS).map(([key, colors]) => {
-                            const userOrders = getOrdersByUser(key);
-                            const isUserSelected = selectedPerson === key;
-                            return (
-                              <div 
-                                key={key} 
-                                className={`flex flex-col items-center gap-2 transition-all duration-300 cursor-pointer ${
-                                  isUserSelected ? 'scale-110' : 'hover:scale-105'
-                                }`}
-                                onClick={() => !isEditMode && setSelectedPerson(isUserSelected ? null : key)}
-                              >
-                                {/* Computer Workstation */}
-                                <ComputerWorkstation
-                                  colorHex={colors.hex}
-                                  orders={userOrders}
-                                  isSelected={isUserSelected}
-                                />
-                                
-                                {/* 3D Person */}
-                                <AnimatedPerson3D
-                                  name={userNames[key]}
-                                  color={colors.text}
-                                  colorHex={colors.hex}
-                                  isSelected={isUserSelected}
-                                  onClick={() => {}}
-                                  orderCount={userOrders.length}
-                                />
-                              </div>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <div className="flex gap-2 flex-wrap justify-center">
-                          {getOrdersByStation(station.stationType).map(({ order, index }) => (
-                            <OrderChip key={order.id} order={order} index={index} isEditMode={isEditMode} />
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </Rnd>
-              ))}
-            </div>
+          </div>
+
+          {/* 3D Scene Controls Hint */}
+          <div 
+            className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full backdrop-blur-md text-xs text-cyan-400/70"
+            style={{
+              background: 'rgba(15, 23, 42, 0.8)',
+              border: '1px solid rgba(34, 211, 238, 0.2)',
+            }}
+          >
+            🖱️ Arraste para rotacionar • Scroll para zoom • Clique nos elementos para selecionar
           </div>
         </div>
       </div>
@@ -615,8 +341,8 @@ export default function Production() {
               {completedOrders.length === 0 ? (
                 <p className="text-emerald-400/50 text-sm text-center py-4">Nenhum trabalho finalizado.</p>
               ) : (
-                completedOrders.map(({ order, index }) => {
-                  const { hex } = getUserColor(order.assigned_user?.username);
+                completedOrders.map((order, index) => {
+                  const hex = getUserColor(order.assigned_user?.username);
                   return (
                     <div 
                       key={order.id} 
@@ -648,18 +374,6 @@ export default function Production() {
           </ScrollArea>
         </DialogContent>
       </Dialog>
-
-      {/* Custom CSS for animations */}
-      <style>{`
-        @keyframes shimmer {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(100%); }
-        }
-        @keyframes scroll-left {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
-        }
-      `}</style>
     </div>
   );
 }
