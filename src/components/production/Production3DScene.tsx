@@ -1,14 +1,7 @@
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls, Float, Text, Html } from "@react-three/drei";
-import { EffectComposer, Bloom } from "@react-three/postprocessing";
+import { OrbitControls, Html } from "@react-three/drei";
 import { Suspense, useState } from "react";
 import * as THREE from "three";
-import { LabFloor } from "./scene/LabFloor";
-import { Workstation } from "./scene/Workstation";
-import { Avatar3D } from "./scene/Avatar3D";
-import { DataChip } from "./scene/DataChip";
-import { ParticleField } from "./scene/ParticleField";
-import { NeonWalls } from "./scene/NeonWalls";
 
 interface Order {
   id: string;
@@ -28,14 +21,14 @@ interface Production3DSceneProps {
 }
 
 // Station positions based on floor plan
-const STATIONS = {
-  projeto: { position: [0, 0, -3] as [number, number, number], size: [8, 3] as [number, number], label: "ÁREA DE PROJETO" },
-  fresadora: { position: [5, 0, 0] as [number, number, number], size: [2, 2] as [number, number], label: "FRESADORA" },
-  vazado: { position: [7, 0, 0] as [number, number, number], size: [2, 2] as [number, number], label: "VAZADO" },
-  espera: { position: [0, 0, 0] as [number, number, number], size: [4, 3] as [number, number], label: "ÁREA DE ESPERA" },
-  maquiagem: { position: [-2, 0, 3] as [number, number, number], size: [3, 2] as [number, number], label: "MAQUIAGEM" },
-  pureto: { position: [3, 0, 3] as [number, number, number], size: [3, 2] as [number, number], label: "PURETO" },
-  saida: { position: [-5, 0, 3] as [number, number, number], size: [2, 2] as [number, number], label: "SAÍDA" },
+const STATIONS: Record<string, { position: [number, number, number]; size: [number, number]; label: string; color: string }> = {
+  projeto: { position: [0, 0, -3], size: [8, 3], label: "ÁREA DE PROJETO", color: "#22d3ee" },
+  fresadora: { position: [5, 0, 0], size: [2, 2], label: "FRESADORA", color: "#22d3ee" },
+  vazado: { position: [7, 0, 0], size: [2, 2], label: "VAZADO", color: "#d946ef" },
+  espera: { position: [0, 0, 1], size: [4, 3], label: "ÁREA DE ESPERA", color: "#f59e0b" },
+  maquiagem: { position: [-3, 0, 4], size: [3, 2], label: "MAQUIAGEM", color: "#ec4899" },
+  pureto: { position: [3, 0, 4], size: [3, 2], label: "PURETO", color: "#8b5cf6" },
+  saida: { position: [-6, 0, 4], size: [2, 2], label: "SAÍDA", color: "#10b981" },
 };
 
 const USER_COLORS: Record<string, string> = {
@@ -68,6 +61,237 @@ const getStation = (status: string): string => {
   }
 };
 
+// Simple Floor Component
+function Floor() {
+  return (
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.1, 0]} receiveShadow>
+      <planeGeometry args={[25, 18]} />
+      <meshStandardMaterial color="#0f172a" metalness={0.5} roughness={0.5} />
+    </mesh>
+  );
+}
+
+// Grid Lines
+function GridLines() {
+  return (
+    <gridHelper args={[25, 25, "#22d3ee", "#1e3a5f"]} position={[0, 0.01, 0]} />
+  );
+}
+
+// Simple Workstation
+function SimpleWorkstation({ 
+  position, 
+  size, 
+  label, 
+  color,
+  orderCount 
+}: { 
+  position: [number, number, number]; 
+  size: [number, number];
+  label: string;
+  color: string;
+  orderCount: number;
+}) {
+  return (
+    <group position={position}>
+      {/* Platform */}
+      <mesh position={[0, 0.02, 0]}>
+        <boxGeometry args={[size[0], 0.05, size[1]]} />
+        <meshStandardMaterial 
+          color={color} 
+          transparent 
+          opacity={0.4}
+          emissive={color}
+          emissiveIntensity={0.2}
+        />
+      </mesh>
+      
+      {/* Border */}
+      <mesh position={[0, 0.05, 0]}>
+        <boxGeometry args={[size[0] + 0.1, 0.03, size[1] + 0.1]} />
+        <meshBasicMaterial color={color} transparent opacity={0.6} />
+      </mesh>
+      
+      {/* Corner pillars */}
+      {[
+        [-size[0]/2 + 0.1, 0.25, -size[1]/2 + 0.1],
+        [size[0]/2 - 0.1, 0.25, -size[1]/2 + 0.1],
+        [-size[0]/2 + 0.1, 0.25, size[1]/2 - 0.1],
+        [size[0]/2 - 0.1, 0.25, size[1]/2 - 0.1],
+      ].map((pos, i) => (
+        <mesh key={i} position={pos as [number, number, number]}>
+          <cylinderGeometry args={[0.06, 0.06, 0.5, 8]} />
+          <meshStandardMaterial 
+            color={color}
+            emissive={color}
+            emissiveIntensity={0.5}
+          />
+        </mesh>
+      ))}
+      
+      {/* Label */}
+      <Html position={[0, 0.7, 0]} center style={{ pointerEvents: 'none' }}>
+        <div
+          className="px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider whitespace-nowrap"
+          style={{
+            background: 'rgba(10, 15, 26, 0.95)',
+            border: `2px solid ${color}`,
+            color: color,
+            boxShadow: `0 0 20px ${color}50`,
+          }}
+        >
+          {label}
+          {orderCount > 0 && (
+            <span
+              className="ml-2 px-2 py-0.5 rounded-full"
+              style={{ backgroundColor: color, color: '#0a0f1a' }}
+            >
+              {orderCount}
+            </span>
+          )}
+        </div>
+      </Html>
+    </group>
+  );
+}
+
+// Simple Avatar
+function SimpleAvatar({
+  position,
+  name,
+  color,
+  isSelected,
+  onClick,
+  orderCount
+}: {
+  position: [number, number, number];
+  name: string;
+  color: string;
+  isSelected: boolean;
+  onClick: () => void;
+  orderCount: number;
+}) {
+  return (
+    <group position={position} onClick={onClick}>
+      {/* Selection ring */}
+      {isSelected && (
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
+          <ringGeometry args={[0.5, 0.6, 32]} />
+          <meshBasicMaterial color={color} transparent opacity={0.7} />
+        </mesh>
+      )}
+      
+      {/* Glow base */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
+        <circleGeometry args={[0.4, 32]} />
+        <meshBasicMaterial color={color} transparent opacity={0.4} />
+      </mesh>
+      
+      {/* Body */}
+      <mesh position={[0, 0.4, 0]}>
+        <cylinderGeometry args={[0.2, 0.25, 0.5, 8]} />
+        <meshStandardMaterial 
+          color={color}
+          emissive={color}
+          emissiveIntensity={0.3}
+        />
+      </mesh>
+      
+      {/* Head */}
+      <mesh position={[0, 0.85, 0]}>
+        <sphereGeometry args={[0.2, 16, 16]} />
+        <meshStandardMaterial 
+          color={color}
+          emissive={color}
+          emissiveIntensity={0.3}
+        />
+      </mesh>
+      
+      {/* Visor */}
+      <mesh position={[0, 0.85, 0.18]}>
+        <boxGeometry args={[0.28, 0.08, 0.05]} />
+        <meshBasicMaterial color="#0a0f1a" />
+      </mesh>
+      
+      {/* Name tag */}
+      <Html position={[0, 1.3, 0]} center style={{ pointerEvents: 'none' }}>
+        <div
+          className="px-2 py-1 rounded text-xs font-bold whitespace-nowrap"
+          style={{
+            background: 'rgba(10, 15, 26, 0.95)',
+            border: `2px solid ${color}`,
+            color: color,
+            boxShadow: `0 0 15px ${color}50`,
+          }}
+        >
+          {name}
+          {orderCount > 0 && (
+            <span
+              className="ml-1 px-1.5 py-0.5 rounded-full text-[10px]"
+              style={{ backgroundColor: color, color: '#0a0f1a' }}
+            >
+              {orderCount}
+            </span>
+          )}
+        </div>
+      </Html>
+    </group>
+  );
+}
+
+// Simple Data Chip
+function SimpleDataChip({
+  position,
+  color,
+  order,
+  isSelected,
+  onClick
+}: {
+  position: [number, number, number];
+  color: string;
+  order: Order;
+  isSelected: boolean;
+  onClick: () => void;
+}) {
+  const [hovered, setHovered] = useState(false);
+  
+  return (
+    <group 
+      position={position}
+      onClick={(e) => { e.stopPropagation(); onClick(); }}
+      onPointerEnter={() => setHovered(true)}
+      onPointerLeave={() => setHovered(false)}
+    >
+      <mesh scale={isSelected || hovered ? 1.2 : 1}>
+        <boxGeometry args={[0.35, 0.08, 0.25]} />
+        <meshStandardMaterial 
+          color={color}
+          emissive={color}
+          emissiveIntensity={isSelected ? 0.6 : 0.3}
+        />
+      </mesh>
+      
+      {/* Show info on hover/select */}
+      {(hovered || isSelected) && (
+        <Html position={[0, 0.4, 0]} center>
+          <div 
+            className="px-2 py-1.5 rounded text-xs min-w-[120px] pointer-events-none"
+            style={{
+              background: 'rgba(10, 15, 26, 0.95)',
+              border: `2px solid ${color}`,
+              color: '#e2e8f0',
+              boxShadow: `0 0 20px ${color}50`,
+            }}
+          >
+            <div style={{ color }} className="font-bold">{order.order_number}</div>
+            <div className="text-cyan-100/80 text-[10px]">{order.patient_name}</div>
+          </div>
+        </Html>
+      )}
+    </group>
+  );
+}
+
 function Scene({ 
   orders, 
   selectedPerson, 
@@ -75,7 +299,6 @@ function Scene({
   onSelectOrder,
   userNames 
 }: Production3DSceneProps) {
-  const [hoveredStation, setHoveredStation] = useState<string | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   // Group orders by station
@@ -98,49 +321,40 @@ function Scene({
   }, {} as Record<string, Order[]>);
 
   const handleOrderClick = (order: Order) => {
-    setSelectedOrder(selectedOrder?.id === order.id ? null : order);
-    onSelectOrder(selectedOrder?.id === order.id ? null : order);
+    const newSelection = selectedOrder?.id === order.id ? null : order;
+    setSelectedOrder(newSelection);
+    onSelectOrder(newSelection);
   };
 
   return (
     <>
-      {/* Ambient and directional lights */}
-      <ambientLight intensity={0.2} />
-      <directionalLight position={[10, 10, 5]} intensity={0.3} color="#22d3ee" />
-      <directionalLight position={[-10, 10, -5]} intensity={0.2} color="#d946ef" />
-      
-      {/* Point lights for neon effect */}
-      <pointLight position={[0, 3, -3]} intensity={2} color="#22d3ee" distance={15} />
-      <pointLight position={[-5, 3, 3]} intensity={1.5} color="#10b981" distance={10} />
-      <pointLight position={[5, 3, 0]} intensity={1.5} color="#d946ef" distance={10} />
-      <pointLight position={[0, 3, 3]} intensity={1.5} color="#f59e0b" distance={10} />
+      {/* Lighting */}
+      <ambientLight intensity={0.3} />
+      <directionalLight position={[10, 10, 5]} intensity={0.5} color="#ffffff" />
+      <pointLight position={[0, 5, -3]} intensity={1} color="#22d3ee" distance={20} />
+      <pointLight position={[-5, 5, 3]} intensity={0.8} color="#10b981" distance={15} />
+      <pointLight position={[5, 5, 0]} intensity={0.8} color="#d946ef" distance={15} />
+      <pointLight position={[0, 5, 4]} intensity={0.8} color="#f59e0b" distance={15} />
 
-      {/* Lab Floor with circuit pattern */}
-      <LabFloor />
-
-      {/* Neon Walls */}
-      <NeonWalls />
-
-      {/* Floating Particles */}
-      <ParticleField count={200} />
+      {/* Floor */}
+      <Floor />
+      <GridLines />
 
       {/* Workstations */}
       {Object.entries(STATIONS).map(([key, config]) => (
-        <Workstation
+        <SimpleWorkstation
           key={key}
           position={config.position}
           size={config.size}
           label={config.label}
-          stationId={key}
-          isHovered={hoveredStation === key}
-          onHover={setHoveredStation}
+          color={config.color}
           orderCount={ordersByStation[key]?.length || 0}
         />
       ))}
 
-      {/* Avatars for users in projeto area */}
+      {/* Avatars */}
       {Object.entries(USER_POSITIONS).map(([username, position]) => (
-        <Avatar3D
+        <SimpleAvatar
           key={username}
           position={position}
           name={userNames[username] || username.toUpperCase()}
@@ -151,25 +365,25 @@ function Scene({
         />
       ))}
 
-      {/* Data Chips (orders) moving between stations */}
+      {/* Data Chips for non-projeto stations */}
       {Object.entries(ordersByStation).map(([stationKey, stationOrders]) => {
-        if (stationKey === "projeto") return null; // Orders shown near avatars
-        const station = STATIONS[stationKey as keyof typeof STATIONS];
+        if (stationKey === "projeto") return null;
+        const station = STATIONS[stationKey];
         if (!station) return null;
         
-        return stationOrders.map((order, index) => {
+        return stationOrders.slice(0, 12).map((order, index) => {
           const row = Math.floor(index / 4);
           const col = index % 4;
-          const offsetX = (col - 1.5) * 0.6;
-          const offsetZ = row * 0.5;
+          const offsetX = (col - 1.5) * 0.5;
+          const offsetZ = row * 0.4;
           
           return (
-            <DataChip
+            <SimpleDataChip
               key={order.id}
               position={[
                 station.position[0] + offsetX,
-                0.3 + index * 0.02,
-                station.position[2] + offsetZ
+                0.2 + index * 0.01,
+                station.position[2] + offsetZ + 0.3
               ]}
               order={order}
               isSelected={selectedOrder?.id === order.id}
@@ -180,21 +394,21 @@ function Scene({
         });
       })}
 
-      {/* Orders for projeto area - near each user */}
+      {/* Data Chips near avatars for projeto station */}
       {Object.entries(ordersByUser).map(([username, userOrders]) => {
         const basePosition = USER_POSITIONS[username];
         if (!basePosition) return null;
         
         return userOrders.slice(0, 6).map((order, index) => {
           const angle = (index / 6) * Math.PI * 2;
-          const radius = 0.8;
+          const radius = 0.7;
           
           return (
-            <DataChip
+            <SimpleDataChip
               key={order.id}
               position={[
                 basePosition[0] + Math.cos(angle) * radius,
-                0.5 + index * 0.1,
+                0.3 + index * 0.08,
                 basePosition[2] + Math.sin(angle) * radius + 0.5
               ]}
               order={order}
@@ -223,24 +437,15 @@ function Scene({
 
 export function Production3DScene(props: Production3DSceneProps) {
   return (
-    <div className="w-full h-full">
+    <div className="w-full h-full" style={{ minHeight: '500px', background: '#0f172a' }}>
       <Canvas
         camera={{ position: [0, 12, 12], fov: 50 }}
-        gl={{ antialias: true, alpha: true }}
-        style={{ background: 'transparent' }}
+        gl={{ antialias: true }}
       >
+        <color attach="background" args={['#0f172a']} />
+        <fog attach="fog" args={['#0f172a', 15, 35]} />
         <Suspense fallback={null}>
           <Scene {...props} />
-          
-          {/* Post-processing effects */}
-          <EffectComposer>
-            <Bloom 
-              intensity={1.5}
-              luminanceThreshold={0.2}
-              luminanceSmoothing={0.9}
-              mipmapBlur
-            />
-          </EffectComposer>
         </Suspense>
       </Canvas>
     </div>
