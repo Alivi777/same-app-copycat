@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
-import { Text, Html, Float } from "@react-three/drei";
+import { Html, Float } from "@react-three/drei";
 import * as THREE from "three";
 
 interface Avatar3DProps {
@@ -24,7 +24,6 @@ export function Avatar3D({
   const bodyRef = useRef<THREE.Group>(null);
   const [hovered, setHovered] = useState(false);
   
-  const threeColor = new THREE.Color(color);
   const scale = isSelected ? 1.2 : hovered ? 1.1 : 1;
 
   useFrame((state) => {
@@ -177,32 +176,26 @@ export function Avatar3D({
         </group>
       </group>
       
-      {/* Floating name tag */}
+      {/* Floating name tag using Html */}
       <Float speed={2} rotationIntensity={0} floatIntensity={0.2}>
-        <group position={[0, 1.3, 0]}>
-          {/* Background */}
-          <mesh>
-            <planeGeometry args={[0.8, 0.25]} />
-            <meshBasicMaterial color="#0a0f1a" transparent opacity={0.8} />
-          </mesh>
-          
-          {/* Border */}
-          <lineSegments position={[0, 0, 0.01]}>
-            <edgesGeometry args={[new THREE.PlaneGeometry(0.8, 0.25)]} />
-            <lineBasicMaterial color={color} />
-          </lineSegments>
-          
-          {/* Name */}
-          <Text
-            position={[0, 0, 0.02]}
-            fontSize={0.1}
-            color={color}
-            anchorX="center"
-            anchorY="middle"
+        <Html
+          position={[0, 1.3, 0]}
+          center
+          style={{ pointerEvents: 'none' }}
+        >
+          <div
+            className="px-3 py-1.5 rounded-md whitespace-nowrap"
+            style={{
+              background: 'rgba(10, 15, 26, 0.9)',
+              border: `2px solid ${color}`,
+              boxShadow: `0 0 15px ${color}40`,
+            }}
           >
-            {name}
-          </Text>
-        </group>
+            <span className="text-xs font-bold" style={{ color }}>
+              {name}
+            </span>
+          </div>
+        </Html>
       </Float>
       
       {/* Order count indicator */}
@@ -213,16 +206,9 @@ export function Avatar3D({
               <circleGeometry args={[0.15, 16]} />
               <meshBasicMaterial color={color} />
             </mesh>
-            <Text
-              position={[0, 0, 0.01]}
-              fontSize={0.12}
-              color="#0a0f1a"
-              anchorX="center"
-              anchorY="middle"
-              fontWeight="bold"
-            >
-              {orderCount}
-            </Text>
+            <Html center style={{ pointerEvents: 'none' }}>
+              <span className="text-xs font-bold text-slate-900">{orderCount}</span>
+            </Html>
           </group>
         </Float>
       )}

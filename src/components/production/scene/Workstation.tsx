@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
-import { Text, Html } from "@react-three/drei";
+import { Html } from "@react-three/drei";
 import * as THREE from "three";
 
 interface WorkstationProps {
@@ -27,7 +27,6 @@ export function Workstation({
   const [intensity, setIntensity] = useState(0.5);
   
   const color = getStationColor(stationId);
-  const threeColor = new THREE.Color(color);
 
   useFrame((state) => {
     const time = state.clock.elapsedTime;
@@ -89,56 +88,37 @@ export function Workstation({
         </mesh>
       ))}
       
-      {/* Floating label */}
-      <group position={[0, 0.8, 0]}>
-        {/* Label background */}
-        <mesh position={[0, 0, 0]}>
-          <planeGeometry args={[size[0] * 0.6, 0.4]} />
-          <meshBasicMaterial 
-            color="#0a0f1a"
-            transparent
-            opacity={0.8}
-          />
-        </mesh>
-        
-        {/* Label border */}
-        <lineSegments position={[0, 0, 0.01]}>
-          <edgesGeometry args={[new THREE.PlaneGeometry(size[0] * 0.6, 0.4)]} />
-          <lineBasicMaterial color={color} />
-        </lineSegments>
-        
-        {/* Label text */}
-        <Text
-          position={[0, 0, 0.02]}
-          fontSize={0.15}
-          color={color}
-          anchorX="center"
-          anchorY="middle"
-          font="/fonts/inter-bold.woff"
+      {/* Floating label using Html */}
+      <Html
+        position={[0, 0.8, 0]}
+        center
+        style={{
+          pointerEvents: 'none',
+        }}
+      >
+        <div
+          className="px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider whitespace-nowrap"
+          style={{
+            background: 'rgba(10, 15, 26, 0.9)',
+            border: `2px solid ${color}`,
+            color: color,
+            boxShadow: `0 0 20px ${color}40`,
+          }}
         >
           {label}
-        </Text>
-        
-        {/* Order count badge */}
-        {orderCount > 0 && (
-          <group position={[size[0] * 0.25, 0.15, 0]}>
-            <mesh>
-              <circleGeometry args={[0.12, 16]} />
-              <meshBasicMaterial color={color} />
-            </mesh>
-            <Text
-              position={[0, 0, 0.01]}
-              fontSize={0.1}
-              color="#0a0f1a"
-              anchorX="center"
-              anchorY="middle"
-              fontWeight="bold"
+          {orderCount > 0 && (
+            <span
+              className="ml-2 px-2 py-0.5 rounded-full text-[10px]"
+              style={{
+                backgroundColor: color,
+                color: '#0a0f1a',
+              }}
             >
               {orderCount}
-            </Text>
-          </group>
-        )}
-      </group>
+            </span>
+          )}
+        </div>
+      </Html>
       
       {/* Control panels on workstation */}
       {stationId !== "espera" && stationId !== "saida" && (
